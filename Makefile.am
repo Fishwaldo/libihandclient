@@ -1,3 +1,3 @@
 SUBDIRS	= muscle include src
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libihanclient-1.0.pc
+pkgconfig_DATA = libihanclient-0.1.pc
