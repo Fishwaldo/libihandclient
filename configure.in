@@ -21,9 +21,9 @@ dnl AC_LIBLTDL_CONVENIENCE
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LIBTOOL
-AC_PROG_YACC 
-AC_PROG_LEX
-AC_PATH_PROG( SED, sed, , $PATH:/usr/bin:/usr/local/bin)
+# AC_PROG_YACC 
+# AC_PROG_LEX
+# AC_PATH_PROG( SED, sed, , $PATH:/usr/bin:/usr/local/bin)
 
 AX_BOOST_BASE(1.37)
 AX_BOOST_SYSTEM
@@ -79,7 +79,7 @@ if test "${ac_configure_args+set}" != "set" ; then
 fi
 AC_SUBST([CONFIGURE_ARGS], $ac_configure_args)
 
-AC_CONFIG_FILES(Makefile muscle/Makefile include/Makefile src/Makefile libihanclient-0.1.pc test/Makefile)
+AC_CONFIG_FILES([Makefile muscle/Makefile include/Makefile src/Makefile libihanclient-0.1.pc test/Makefile])
 AC_CACHE_SAVE
 AC_OUTPUT
 #AC_MSG_HEADER([Configuration complete.])

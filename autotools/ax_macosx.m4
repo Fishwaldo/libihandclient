@@ -4,7 +4,7 @@ AC_DEFUN([Check_MACOSX],
 [
   dnl Check for API introduced in MacOS X 10.2.
   AC_CACHE_CHECK([for CoreServices],
-    have_CoreServices,
+    ax_cv_have_CoreServices,
     [gt_save_CPPFLAGS="$CPPFLAGS"
      CPPFLAGS="$CPPFLAGS -I/System/Library/Frameworks/CoreServices.framework/Headers"
      gt_save_LIBS="$LIBS"
