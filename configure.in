@@ -40,6 +40,21 @@ CXXFLAGS="$CXXFLAGS $APR_CFLAGS $APRUTIL_CFLAGS $LOG4CXX_CFLAGS"
 Check_MACOSX
 LIBS="$LIBS $APR_LIBS $APRUTIL_LIBS $LOG4CXX_LIBS $INTL_MACOSX_LIBS"
 
+AC_MSG_CHECKING(Whether to Enable Coverage Testing...)
+AC_ARG_ENABLE(gcov,
+AC_HELP_STRING([--enable-gcov], [Enable Coverage Testing]),
+[ case "$enableval" in
+  yes)
+	CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage --coverage"
+	LIBS="$LIBS -lgcov"
+	AC_MSG_RESULT(yes - Watch your Log Files)
+	;;
+  *)
+	AC_MSG_RESULT(no)
+	;;
+  esac],
+AC_MSG_RESULT(no)
+)
 
 
 dnl check if we are running with Debug....

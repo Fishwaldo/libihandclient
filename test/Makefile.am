@@ -10,3 +10,6 @@ gtest_all_test_LDADD = $(abs_builddir)/../src/libihanclient.la
 noinst_HEADERS = gtest/gtest.h
 clean-local:
 	-rm -rf results
+	-rm *.gcno
+	-rm *.gcda 
+	-rm *.gcov
