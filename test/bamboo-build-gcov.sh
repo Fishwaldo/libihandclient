@@ -11,4 +11,4 @@ make check
 cd test
 gcov *.cpp
 mkdir -p ../target/site/clover
-./gcov_to_clover.py -o ../target/site/clover/clover.xml *.gcov
+./gcov_to_clover.py -o result/clover.xml *.gcov
