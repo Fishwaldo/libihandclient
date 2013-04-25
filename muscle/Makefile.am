@@ -15,3 +15,8 @@ noinst_HEADERS = util/ByteBuffer.h util/Queue.h message/Message.h util/FlatCount
 EXTRA_DIST = muscle.vcproj	
 	
 	
+	
+clean-local:
+	-rm *.gcda
+	-rm *.gcno
+	-rm *.gcov

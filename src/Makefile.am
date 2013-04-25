@@ -9,3 +9,7 @@ demo_SOURCES= varcontainerdemo.cpp
 demo_LDADD = $(INTL_MACOSX_LIBS) libihanclient.la  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_SERIALIZATION_LIB)
 demo_CXXFLAGS = -DMUSCLE_SINGLE_THREAD_ONLY -I$(top_srcdir)/include/ -I$(top_srcdir)/muscle/ $(BOOST_CPPFLAGS)	
 	
+clean-local:
+	-rm *.gcda
+	-rm *.gcno
+	-rm *.gcov
