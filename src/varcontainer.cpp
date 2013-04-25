@@ -41,7 +41,7 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 	muscle::String fieldname;
 	uint32 type, size, i;
 	muscle::MessageFieldNameIterator it = msg()->GetFieldNameIterator();
-	for (; it.HasMoreFieldNames() == true; it++ ) {
+	for (; it.HasData(); it++ ) {
 		fieldname = it.GetFieldName();
 		msg()->GetInfo(fieldname, &type, &size);
 		switch (type) {
@@ -103,7 +103,7 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 						   uint32 Hashtype, Hashsize;
 						   HashVals newHashVals;
 						   muscle::MessageFieldNameIterator hit = msgMsg()->GetFieldNameIterator();
-						   for (; hit.HasMoreFieldNames() == true; hit++ ) {
+						   for (; hit.HasData(); hit++ ) {
 							   Hashfieldname = hit.GetFieldName();
 							   msgMsg()->GetInfo(Hashfieldname, &Hashtype, &Hashsize);
 							   switch (Hashtype) {
@@ -575,7 +575,7 @@ muscle::MessageRef VarStorage_t::toMuscle() {
 						{
 							muscle::MessageRef DateMsg = muscle::GetMessageFromPool(ST_DATETIME);
 							DateMsg()->AddString("DATE", boost::posix_time::to_iso_string(boost::get<boost::posix_time::ptime>((*hvit).second)).c_str());
-							HashMsg()->AddMessage((*hvit).first.c_str(), DateMsg());
+							HashMsg()->AddMessage((*hvit).first.c_str(), DateMsg);
 						}
 					} else {
 						cout << "Unknown Type: " << (*hvit).second.type().name() << std::endl;
@@ -588,7 +588,7 @@ muscle::MessageRef VarStorage_t::toMuscle() {
 				{
 					muscle::MessageRef DateMsg = muscle::GetMessageFromPool(ST_DATETIME);
 					DateMsg()->AddString("DATE", boost::posix_time::to_iso_string((*it2)->DateTimeVal).c_str());
-					newMsg()->AddMessage((*it).first.c_str(), DateMsg());
+					newMsg()->AddMessage((*it).first.c_str(), DateMsg);
 				}
 			} else if ((*it2)->StoredType == ST_VARSTORAGE) {
 				{
@@ -603,7 +603,7 @@ muscle::MessageRef VarStorage_t::toMuscle() {
 	}
 //	this->printToStream();
 //	newMsg()->PrintToStream();
-	return newMsg();
+	return newMsg;
 }
 
 bool VarStorage_t::is_empty() {

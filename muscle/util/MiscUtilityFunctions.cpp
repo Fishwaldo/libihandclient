@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #include <fcntl.h>
 
@@ -25,14 +25,17 @@
 
 namespace muscle {
 
+#ifdef MUSCLE_ENABLE_DEADLOCK_FINDER
+   extern bool _enableDeadlockFinderPrints;
+#endif
+
 extern bool _mainReflectServerCatchSignals;  // from SetupSystem.cpp
 
-static status_t ParseArgAux(const String & a, Message * optAddToMsg, Queue<String> * optAddToQueue)
+static status_t ParseArgAux(const String & a, Message * optAddToMsg, Queue<String> * optAddToQueue, bool cs)
 {
    // Remove any initial dashes
    String argName = a.Trim();
    const char * s = argName();
-   while(*s == '-') s++;
    if (s > argName()) argName = argName.Substring(s-argName);
 
    if (optAddToQueue) return optAddToQueue->AddTail(argName);
@@ -43,58 +46,68 @@ static status_t ParseArgAux(const String & a, Message * optAddToMsg, Queue<Strin
       if (equalsAt >= 0)
       {
          argValue = argName.Substring(equalsAt+1).Trim();  // this must be first!
-         argName  = argName.Substring(0, equalsAt).Trim().ToLowerCase();
+         argName  = argName.Substring(0, equalsAt).Trim();
+         if (cs == false) argName = argName.ToLowerCase();
       }
       if (argName.HasChars())
       { 
          // Don't allow the parsing to fail just because the user specified a section name the same as a param name!
          uint32 tc;
+         static const String _escapedQuote = "\\\"";
+         static const String _quote = "\"";
+         argName.Replace(_escapedQuote, _quote);
+         argValue.Replace(_escapedQuote, _quote);
          if ((optAddToMsg->GetInfo(argName, &tc) == B_NO_ERROR)&&(tc != B_STRING_TYPE)) (void) optAddToMsg->RemoveName(argName);
          return optAddToMsg->AddString(argName, argValue);
       }
       else return B_NO_ERROR;
    }
 }
-status_t ParseArg(const String & a, Message & addTo)       {return ParseArgAux(a, &addTo, NULL);}
-status_t ParseArg(const String & a, Queue<String> & addTo) {return ParseArgAux(a, NULL, &addTo);}
+status_t ParseArg(const String & a, Message & addTo, bool cs)       {return ParseArgAux(a, &addTo, NULL, cs);}
+status_t ParseArg(const String & a, Queue<String> & addTo, bool cs) {return ParseArgAux(a, NULL, &addTo, cs);}
 
 String UnparseArgs(const Message & argsMsg)
 {
-   String ret, next;
-   for (MessageFieldNameIterator it(argsMsg, B_STRING_TYPE); it.HasMoreFieldNames(); it++)
+   String ret, next, tmp;
+   for (MessageFieldNameIterator it(argsMsg, B_STRING_TYPE); it.HasData(); it++)
    {
       const String & fn = it.GetFieldName();
-      const String * s;
-      for (int32 i=0; argsMsg.FindString(fn, i, &s) == B_NO_ERROR; i++)
+      const String * ps;
+      for (int32 i=0; argsMsg.FindString(fn, i, &ps) == B_NO_ERROR; i++)
       {
-         if (s->HasChars())
+         if (ps->HasChars())
          {
             next = fn;
             next += '=';
-            if ((s->IndexOf(' ') >= 0)||(s->IndexOf('\t') >= 0)||(s->IndexOf('\r') >= 0)||(s->IndexOf('\n') >= 0))
+
+            tmp = *ps;
+            tmp.Replace("\"", "\\\"");
+            if ((tmp.IndexOf(' ') >= 0)||(tmp.IndexOf('\t') >= 0)||(tmp.IndexOf('\r') >= 0)||(tmp.IndexOf('\n') >= 0))
             {
                next += '\"';
-               next += *s;
+               next += tmp;
                next += '\"';
             }
-            else next += *s;
+            else next += tmp;
          }
          else next = fn;
+
+         if (next.HasChars())
+         {
+            if (ret.HasChars()) ret += ' ';
+            ret += next;
+         }
+         next.Clear();
       }
-      if (next.HasChars())
-      {
-         if (ret.HasChars()) ret += ' ';
-         ret += next;
-      }
-      next.Clear();
    }
    return ret;
 }
 
-String UnparseArgs(const Queue<String> & args)
+String UnparseArgs(const Queue<String> & args, uint32 startIdx, uint32 endIdx)
 {
    String ret;
-   for (uint32 i=0; i<args.GetNumItems(); i++)
+   endIdx = muscleMin(endIdx, args.GetNumItems());
+   for (uint32 i=startIdx; i<endIdx; i++)
    {
       String subRet = args[i];
       subRet.Replace("\"", "\\\"");
@@ -105,7 +118,7 @@ String UnparseArgs(const Queue<String> & args)
    return ret;
 }
 
-static status_t ParseArgsAux(const String & line, Message * optAddToMsg, Queue<String> * optAddToQueue)
+static status_t ParseArgsAux(const String & line, Message * optAddToMsg, Queue<String> * optAddToQueue, bool cs)
 {
    TCHECKPOINT;
 
@@ -146,7 +159,7 @@ static status_t ParseArgsAux(const String & line, Message * optAddToMsg, Queue<S
             // It's the "x =5" case (2 tokens)
             String n2(next);
             n2.Replace(GUNK_CHAR, ' ');
-            if (ParseArgAux(n+n2, optAddToMsg, optAddToQueue) != B_NO_ERROR) return B_ERROR;
+            if (ParseArgAux(n+n2, optAddToMsg, optAddToQueue, cs) != B_NO_ERROR) return B_ERROR;
             t = tok();
          }
          else
@@ -157,12 +170,12 @@ static status_t ParseArgsAux(const String & line, Message * optAddToMsg, Queue<S
             {
                String n3(next);
                n3.Replace(GUNK_CHAR, ' ');
-               if (ParseArgAux(n+"="+n3, optAddToMsg, optAddToQueue) != B_NO_ERROR) return B_ERROR;
+               if (ParseArgAux(n+"="+n3, optAddToMsg, optAddToQueue, cs) != B_NO_ERROR) return B_ERROR;
                t = tok();
             }
             else 
             {
-               if (ParseArgAux(n, optAddToMsg, optAddToQueue) != B_NO_ERROR) return B_ERROR;  // for the "x =" case, just parse x and ignore the equals
+               if (ParseArgAux(n, optAddToMsg, optAddToQueue, cs) != B_NO_ERROR) return B_ERROR;  // for the "x =" case, just parse x and ignore the equals
                t = NULL;
             }
          }
@@ -170,47 +183,46 @@ static status_t ParseArgsAux(const String & line, Message * optAddToMsg, Queue<S
       else if (n.EndsWith('='))
       {
          // Try to attach the next keyword
+         String n4(next);
+         n4.Replace(GUNK_CHAR, ' ');
+         if (ParseArgAux(n+n4, optAddToMsg, optAddToQueue, cs) != B_NO_ERROR) return B_ERROR;
          t = tok();
-         if (t)
-         {
-            String n4(t);
-            n4.Replace(GUNK_CHAR, ' ');
-            if (ParseArgAux(n+n4, optAddToMsg, optAddToQueue) != B_NO_ERROR) return B_ERROR;
-            t = tok();
-         }
-         else if (ParseArgAux(n, optAddToMsg, optAddToQueue) != B_NO_ERROR) return B_ERROR;
       }
       else
       {
          // Nope, it's just the normal case
-         if (ParseArgAux(n, optAddToMsg, optAddToQueue) != B_NO_ERROR) return B_ERROR;
+         if (ParseArgAux(n, optAddToMsg, optAddToQueue, cs) != B_NO_ERROR) return B_ERROR;
          t = next;
       }
    }
    return B_NO_ERROR;
 }
-status_t ParseArgs(const String & line, Message & addTo)       {return ParseArgsAux(line, &addTo, NULL);}
-status_t ParseArgs(const String & line, Queue<String> & addTo) {return ParseArgsAux(line, NULL, &addTo);}
+status_t ParseArgs(const String & line, Message & addTo, bool cs)       {return ParseArgsAux(line, &addTo, NULL, cs);}
+status_t ParseArgs(const String & line, Queue<String> & addTo, bool cs) {return ParseArgsAux(line, NULL, &addTo, cs);}
 
-status_t ParseArgs(int argc, char ** argv, Message & addTo)
+status_t ParseArgs(int argc, char ** argv, Message & addTo, bool cs)
 {
-   for (int i=0; i<argc; i++) if (ParseArg(argv[i], addTo) != B_NO_ERROR) return B_ERROR;
+   for (int i=0; i<argc; i++) if (ParseArg(argv[i], addTo, cs) != B_NO_ERROR) return B_ERROR;
    return B_NO_ERROR;
 }
 
-status_t ParseArgs(int argc, char ** argv, Queue<String> & addTo)
+status_t ParseArgs(int argc, char ** argv, Queue<String> & addTo, bool cs)
 {
-   for (int i=0; i<argc; i++) if (ParseArg(argv[i], addTo) != B_NO_ERROR) return B_ERROR;
+   for (int i=0; i<argc; i++) if (ParseArg(argv[i], addTo, cs) != B_NO_ERROR) return B_ERROR;
    return B_NO_ERROR;
 }
 
-static status_t ParseFileAux(FILE * fpIn, Message * optAddToMsg, Queue<String> * optAddToQueue, char * buf, uint32 bufSize)
+static status_t ParseFileAux(StringTokenizer * optTok, FILE * fpIn, Message * optAddToMsg, Queue<String> * optAddToQueue, char * scratchBuf, uint32 bufSize, bool cs)
 {
    status_t ret = B_NO_ERROR;
-   while(fgets(buf, bufSize, fpIn))
+   while(1)
    {
-      String checkForSection(buf);
-      checkForSection = optAddToMsg ? checkForSection.Trim().ToLowerCase() : "";  // sections are only supported for Messages, not Queue<String>'s
+      const char * lineOfText = (optTok) ? optTok->GetNextToken() : fgets(scratchBuf, bufSize, fpIn);
+      if (lineOfText == NULL) break;
+
+      String checkForSection(lineOfText);
+      checkForSection = optAddToMsg ? checkForSection.Trim() : "";  // sections are only supported for Messages, not Queue<String>'s
+      if (cs == false) checkForSection = checkForSection.ToLowerCase();
       if ((checkForSection == "begin")||(checkForSection.StartsWith("begin ")))
       {
          checkForSection = checkForSection.Substring(6).Trim();
@@ -222,10 +234,10 @@ static status_t ParseFileAux(FILE * fpIn, Message * optAddToMsg, Queue<String> *
          if ((optAddToMsg->GetInfo(checkForSection, &tc) == B_NO_ERROR)&&(tc != B_MESSAGE_TYPE)) (void) optAddToMsg->RemoveName(checkForSection);
 
          MessageRef subMsg = GetMessageFromPool();
-         if ((subMsg() == NULL)||(optAddToMsg->AddMessage(checkForSection, subMsg) != B_NO_ERROR)||(ParseFileAux(fpIn, subMsg(), optAddToQueue, buf, bufSize) != B_NO_ERROR)) return B_ERROR;
+         if ((subMsg() == NULL)||(optAddToMsg->AddMessage(checkForSection, subMsg) != B_NO_ERROR)||(ParseFileAux(optTok, fpIn, subMsg(), optAddToQueue, scratchBuf, bufSize, cs) != B_NO_ERROR)) return B_ERROR;
       }
       else if ((checkForSection == "end")||(checkForSection.StartsWith("end "))) return B_NO_ERROR;
-      else if (ParseArgsAux(buf, optAddToMsg, optAddToQueue) != B_NO_ERROR)
+      else if (ParseArgsAux(lineOfText, optAddToMsg, optAddToQueue, cs) != B_NO_ERROR)
       {
          ret = B_ERROR;
          break;
@@ -234,26 +246,103 @@ static status_t ParseFileAux(FILE * fpIn, Message * optAddToMsg, Queue<String> *
    return ret;
 }
 
-static status_t ParseFileAux(FILE * fpIn, Message * optAddToMsg, Queue<String> * optAddToQueue)
+static status_t ParseFileAux(const String * optInStr, FILE * fpIn, Message * optAddToMsg, Queue<String> * optAddToQueue, bool cs)
 {
    TCHECKPOINT;
 
-   const int bufSize = 2048;
-   char * buf = newnothrow_array(char, bufSize);
-   if (buf)
+   if (optInStr)
    {
-      status_t ret = ParseFileAux(fpIn, optAddToMsg, optAddToQueue, buf, bufSize);
-      delete [] buf;
-      return ret;
-   }
-   else 
+      StringTokenizer tok(optInStr->Cstr(), "\r\n");
+      return (tok.GetRemainderOfString() != NULL) ? ParseFileAux(&tok, NULL, optAddToMsg, optAddToQueue, NULL, 0, cs) : B_ERROR;
+   } 
+   else
    {
-      WARN_OUT_OF_MEMORY;
-      return B_ERROR;
+      const int bufSize = 2048;
+      char * buf = newnothrow_array(char, bufSize);
+      if (buf)
+      {
+         status_t ret = ParseFileAux(NULL, fpIn, optAddToMsg, optAddToQueue, buf, bufSize, cs);
+         delete [] buf;
+         return ret;
+      }
+      else 
+      {
+         WARN_OUT_OF_MEMORY;
+         return B_ERROR;
+      }
    }
 }
-status_t ParseFile(FILE * fpIn, Message & addTo)       {return ParseFileAux(fpIn, &addTo, NULL);}
-status_t ParseFile(FILE * fpIn, Queue<String> & addTo) {return ParseFileAux(fpIn, NULL, &addTo);}
+status_t ParseFile(FILE * fpIn, Message & addTo, bool cs)            {return ParseFileAux(NULL, fpIn, &addTo, NULL,   cs);}
+status_t ParseFile(FILE * fpIn, Queue<String> & addTo, bool cs)      {return ParseFileAux(NULL, fpIn, NULL,   &addTo, cs);}
+status_t ParseFile(const String & s, Message & addTo, bool cs)       {return ParseFileAux(&s,   NULL, &addTo, NULL,   cs);}
+status_t ParseFile(const String & s, Queue<String> & addTo, bool cs) {return ParseFileAux(&s,   NULL, NULL,   &addTo, cs);}
+
+static void AddUnparseFileLine(FILE * optFile, String * optString, const String & indentStr, const String & s)
+{
+#ifdef WIN32
+   static const char * eol = "\r\n";
+#else
+   static const char * eol = "\n";
+#endif
+
+   if (optString) 
+   {
+      *optString += indentStr;
+      *optString += s;
+      *optString += eol;
+   }
+   else fprintf(optFile, "%s%s%s", indentStr(), s(), eol);
+}
+
+static status_t UnparseFileAux(const Message & readFrom, FILE * optFile, String * optString, uint32 indentLevel)
+{
+   if ((optFile == NULL)&&(optString == NULL)) return B_ERROR;
+
+   String indentStr = String().Pad(indentLevel);
+   Message scratchMsg;
+   for (MessageFieldNameIterator fnIter(readFrom); fnIter.HasData(); fnIter++)
+   {
+      const String & fn = fnIter.GetFieldName();
+      uint32 tc;
+      if (readFrom.GetInfo(fn, &tc) == B_NO_ERROR)
+      {
+         switch(tc)
+         {
+            case B_MESSAGE_TYPE:
+            {
+               MessageRef nextVal;
+               for (uint32 i=0; readFrom.FindMessage(fn, i, nextVal) == B_NO_ERROR; i++)
+               {
+                  AddUnparseFileLine(optFile, optString, indentStr, String("begin %1").Arg(fn));
+                  if (UnparseFileAux(*nextVal(), optFile, optString, indentLevel+3) != B_NO_ERROR) return B_ERROR; 
+                  AddUnparseFileLine(optFile, optString, indentStr, "end");
+               }
+            }
+            break;
+
+            case B_STRING_TYPE:
+            {
+               const String * nextVal;
+               for (uint32 i=0; readFrom.FindString(fn, i, &nextVal) == B_NO_ERROR; i++)
+               {
+                  scratchMsg.Clear(); if (scratchMsg.AddString(fn, *nextVal) != B_NO_ERROR) return B_ERROR;
+                  AddUnparseFileLine(optFile, optString, indentStr, UnparseArgs(scratchMsg));
+               }
+            }
+            break;
+
+            default:
+               // do nothing
+            break;
+         }
+      }
+      else return B_ERROR;  // should never happen
+   }
+   return B_NO_ERROR;
+}
+
+status_t UnparseFile(const Message & readFrom, FILE * file) {return UnparseFileAux(readFrom, file, NULL, 0);}
+String UnparseFile(const Message & readFrom) {String s; return (UnparseFileAux(readFrom, NULL, &s, 0) == B_NO_ERROR) ? s : "";}
 
 static status_t ParseConnectArgAux(const String & s, uint32 startIdx, uint16 & retPort, bool portRequired)
 {
@@ -268,15 +357,15 @@ static status_t ParseConnectArgAux(const String & s, uint32 startIdx, uint16 & r
    else return portRequired ? B_ERROR : B_NO_ERROR;
 }
 
-status_t ParseConnectArg(const Message & args, const String & fn, String & retHost, uint16 & retPort, bool portRequired)
+status_t ParseConnectArg(const Message & args, const String & fn, String & retHost, uint16 & retPort, bool portRequired, uint32 argIdx)
 {
    const String * s;
-   return (args.FindString(fn, &s) == B_NO_ERROR) ? ParseConnectArg(*s, retHost, retPort, portRequired) : B_ERROR;
+   return (args.FindString(fn, argIdx, &s) == B_NO_ERROR) ? ParseConnectArg(*s, retHost, retPort, portRequired) : B_ERROR;
 }
 
 status_t ParseConnectArg(const String & s, String & retHost, uint16 & retPort, bool portRequired)
 {
-#ifdef MUSCLE_USE_IPV6
+#ifndef MUSCLE_AVOID_IPV6
    int32 rBracket = s.StartsWith('[') ? s.IndexOf(']') : -1;
    if (rBracket >= 0)
    {
@@ -295,12 +384,12 @@ status_t ParseConnectArg(const String & s, String & retHost, uint16 & retPort, b
    return ParseConnectArgAux(s, retHost.Length(), retPort, portRequired);
 }
 
-status_t ParsePortArg(const Message & args, const String & fn, uint16 & retPort)
+status_t ParsePortArg(const Message & args, const String & fn, uint16 & retPort, uint32 argIdx)
 {
    TCHECKPOINT;
 
    const char * v;
-   if (args.FindString(fn, &v) == B_NO_ERROR)
+   if (args.FindString(fn, argIdx, &v) == B_NO_ERROR)
    {
       uint16 r = (uint16) atoi(v);
       if (r > 0)
@@ -312,10 +401,10 @@ status_t ParsePortArg(const Message & args, const String & fn, uint16 & retPort)
    return B_ERROR;
 }
 
-#if __linux__
+#if defined(__linux__) || defined(__APPLE__)
 static void CrashSignalHandler(int sig)
 {
-   // Uninstall this handler, to avoid the possibility of an infinite loop
+   // Uninstall this handler, to avoid the possibility of an infinite regress
    signal(SIGSEGV, SIG_DFL);
    signal(SIGBUS,  SIG_DFL);
    signal(SIGILL,  SIG_DFL);
@@ -330,9 +419,75 @@ static void CrashSignalHandler(int sig)
 }
 #endif
 
+#if defined(MUSCLE_USE_MSVC_STACKWALKER) && !defined(MUSCLE_INLINE_LOGGING)
+extern void _Win32PrintStackTraceForContext(FILE * outFile, CONTEXT * context, uint32 maxDepth);
+
+LONG Win32FaultHandler(struct _EXCEPTION_POINTERS * ExInfo)
+{
+   SetUnhandledExceptionFilter(NULL);  // uninstall the handler to avoid the possibility of an infinite regress
+
+   const char * faultDesc = "";
+   switch(ExInfo->ExceptionRecord->ExceptionCode)
+   {
+      case EXCEPTION_ACCESS_VIOLATION      : faultDesc = "ACCESS VIOLATION"         ; break;
+      case EXCEPTION_DATATYPE_MISALIGNMENT : faultDesc = "DATATYPE MISALIGNMENT"    ; break;
+      case EXCEPTION_FLT_DIVIDE_BY_ZERO    : faultDesc = "FLT DIVIDE BY ZERO"       ; break;
+      default                              : faultDesc = "(unknown)"                ; break;
+    }
+
+    int    faultCode   = ExInfo->ExceptionRecord->ExceptionCode;
+    PVOID  CodeAddress = ExInfo->ExceptionRecord->ExceptionAddress;
+    printf("****************************************************\n");
+    printf("*** A Program Fault occurred:\n");
+    printf("*** Error code %08X: %s\n", faultCode, faultDesc);
+    printf("****************************************************\n");
+    printf("***   Address: %08X\n", (uintptr)CodeAddress);
+    printf("***     Flags: %08X\n", ExInfo->ExceptionRecord->ExceptionFlags);
+    _Win32PrintStackTraceForContext(stdout, ExInfo->ContextRecord, MUSCLE_NO_LIMIT);
+    printf("Crashed MUSCLE process aborting now.... bye!\n");
+    fflush(stdout);
+
+    return EXCEPTION_CONTINUE_SEARCH;  // now crash in the usual way
+}
+#endif
+
+#ifdef __linux__
+static status_t SetRealTimePriority(const char * priStr, bool useFifo)
+{
+   struct sched_param schedparam; memset(&schedparam, 0, sizeof(schedparam));
+   int pri = (strlen(priStr) > 0) ? atoi(priStr) : 11;
+   schedparam.sched_priority = pri;
+
+   const char * desc = useFifo ? "SCHED_FIFO" : "SCHED_RR";
+   if (sched_setscheduler(0, useFifo?SCHED_FIFO:SCHED_RR, &schedparam) == 0)
+   {
+      LogTime(MUSCLE_LOG_INFO, "Set process to real-time (%s) priority %i\n", desc, pri);
+      return B_NO_ERROR;
+   }
+   else 
+   {
+      LogTime(MUSCLE_LOG_ERROR, "Could not invoke real time (%s) scheduling priority %i (access denied?)\n", desc, pri);
+      return B_ERROR;
+   }
+}
+#endif
+
 void HandleStandardDaemonArgs(const Message & args)
 {
    TCHECKPOINT;
+
+#ifndef WIN32
+   if (args.HasName("disablestderr"))
+   {
+      LogTime(MUSCLE_LOG_INFO, "Suppressing all further output to stderr!\n");
+      close(STDERR_FILENO);
+   }
+   if (args.HasName("disablestdout"))
+   {
+      LogTime(MUSCLE_LOG_INFO, "Suppressing all further output to stdout!\n");
+      close(STDOUT_FILENO);
+   }
+#endif
 
    // Do this first, so that the stuff below will affect the right process.
    const char * n;
@@ -341,13 +496,20 @@ void HandleStandardDaemonArgs(const Message & args)
       LogTime(MUSCLE_LOG_INFO, "Spawning off a daemon-child...\n");
       if (BecomeDaemonProcess(NULL, n[0] ? n : "/dev/null") != B_NO_ERROR)
       {
-         LogTime(MUSCLE_LOG_CRITICALERROR, "Couldn't spawn daemon-child process!\n");
+         LogTime(MUSCLE_LOG_CRITICALERROR, "Could not spawn daemon-child process!\n");
          ExitWithoutCleanup(10);
       }
    }
 
 #ifdef WIN32
    if (args.HasName("console")) Win32AllocateStdioConsole();
+#endif
+
+#ifdef MUSCLE_ENABLE_DEADLOCK_FINDER
+   {
+      const char * df = args.GetCstr("deadlockfinder");
+      if (df) _enableDeadlockFinderPrints = ParseBool(df, true);
+   }
 #endif
 
    const char * value;
@@ -358,6 +520,22 @@ void HandleStandardDaemonArgs(const Message & args)
               else LogTime(MUSCLE_LOG_INFO, "Error, unknown display log level type [%s]\n", value);
    }
 
+   if ((args.FindString("oldlogfilespattern", &value) == B_NO_ERROR)&&(*value != '\0')) SetOldLogFilesPattern(value);
+
+   if ((args.FindString("maxlogfiles", &value) == B_NO_ERROR)||(args.FindString("maxnumlogfiles", &value) == B_NO_ERROR))
+   {
+      uint32 maxNumFiles = atol(value);
+      if (maxNumFiles > 0) SetMaxNumLogFiles(maxNumFiles);
+                      else LogTime(MUSCLE_LOG_ERROR, "Please specify a maxnumlogfiles value that is greater than zero.\n");
+   }
+
+
+   if (args.FindString("logfile", &value) == B_NO_ERROR)
+   {
+      SetFileLogName(value);
+      if (GetFileLogLevel() == MUSCLE_LOG_NONE) SetFileLogLevel(MUSCLE_LOG_INFO); // no sense specifying a name and then not logging anything!
+   }
+
    if (args.FindString("filelevel", &value) == B_NO_ERROR)
    {
       int ll = ParseLogLevelKeyword(value);
@@ -365,12 +543,14 @@ void HandleStandardDaemonArgs(const Message & args)
               else LogTime(MUSCLE_LOG_INFO, "Error, unknown file log level type [%s]\n", value);
    }
 
-   if (args.FindString("logfile", &value) == B_NO_ERROR)
+   if (args.FindString("maxlogfilesize", &value) == B_NO_ERROR)
    {
-      SetFileLogName(value);
-      LogTime(MUSCLE_LOG_INFO, "Set log file to [%s]\n", value);
-      if (GetFileLogLevel() == MUSCLE_LOG_NONE) SetFileLogLevel(MUSCLE_LOG_INFO); // no sense specifying a name and then not logging anything!
+      uint32 maxSizeKB = atol(value);
+      if (maxSizeKB > 0) SetFileLogMaximumSize(maxSizeKB*1024);
+                    else LogTime(MUSCLE_LOG_ERROR, "Please specify a maxlogfilesize in kilobytes, that is greater than zero.\n");
    }
+
+   if ((args.HasName("compresslogfile"))||(args.HasName("compresslogfiles"))) SetFileLogCompressionEnabled(true);
 
    if (args.FindString("localhost", &value) == B_NO_ERROR)
    {
@@ -384,20 +564,26 @@ void HandleStandardDaemonArgs(const Message & args)
       else LogTime(MUSCLE_LOG_ERROR, "Error parsing localhost IP address [%s]!\n", value);
    }
 
-#if __linux__
    if ((args.HasName("debugcrashes"))||(args.HasName("debugcrash")))
    {
+#if defined(__linux__) || defined(__APPLE__)
       LogTime(MUSCLE_LOG_INFO, "Enabling stack-trace printing when a crash occurs.\n");
-
       signal(SIGSEGV, CrashSignalHandler);
       signal(SIGBUS,  CrashSignalHandler);
       signal(SIGILL,  CrashSignalHandler);
       signal(SIGABRT, CrashSignalHandler);
       signal(SIGFPE,  CrashSignalHandler); 
-   }
+#elif MUSCLE_USE_MSVC_STACKWALKER
+# ifndef MUSCLE_INLINE_LOGGING
+      LogTime(MUSCLE_LOG_INFO, "Enabling stack-trace printing when a crash occurs.\n");
+      SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER) Win32FaultHandler);
+# endif
+#else
+      LogTime(MUSCLE_LOG_ERROR, "Can't enable stack-trace printing when a crash occurs, that feature isn't supported on this platform!\n");
 #endif
+   }
 
-#if __linux__ || __APPLE__
+#if defined(__linux__) || defined(__APPLE__)
    {
       const char * niceStr = NULL; (void) args.FindString("nice", &niceStr);
       const char * meanStr = NULL; (void) args.FindString("mean", &meanStr);
@@ -409,8 +595,8 @@ void HandleStandardDaemonArgs(const Message & args)
       if (effectiveLevel)
       {
          errno = 0;  // the only reliable way to check for an error here :^P
-         (void) nice(effectiveLevel);
-         if (errno != 0) LogTime(MUSCLE_LOG_WARNING, "Couldn't change process execution priority to "INT32_FORMAT_SPEC".\n", effectiveLevel);
+         int ret = nice(effectiveLevel);  // I'm only looking at the return value to shut gcc 4.4.3 up
+         if (errno != 0) LogTime(MUSCLE_LOG_WARNING, "Could not change process execution priority to " INT32_FORMAT_SPEC " (ret=%i).\n", effectiveLevel, ret);
                     else LogTime(MUSCLE_LOG_INFO, "Process is now %s (niceLevel=%i)\n", (effectiveLevel<0)?"mean":"nice", effectiveLevel);
       }
    }
@@ -418,20 +604,14 @@ void HandleStandardDaemonArgs(const Message & args)
 
 #ifdef __linux__
    const char * priStr;
-   if (args.FindString("realtime", &priStr) == B_NO_ERROR)
-   {
-      struct sched_param schedparam;
-      int pri = (strlen(priStr) > 0) ? atoi(priStr) : 11;
-      schedparam.sched_priority = pri;
-
-      if (sched_setscheduler(0, SCHED_RR, &schedparam) == 0) LogTime(MUSCLE_LOG_INFO, "Set process to real-time priority %i\n", pri);
-                                                        else LogTime(MUSCLE_LOG_ERROR, "Couldn't invoke real time scheduling priority %i (access denied?)\n", pri);
-   }
+        if (args.FindString("realtime",      &priStr) == B_NO_ERROR) SetRealTimePriority(priStr, false);
+   else if (args.FindString("realtime_rr",   &priStr) == B_NO_ERROR) SetRealTimePriority(priStr, false);
+   else if (args.FindString("realtime_fifo", &priStr) == B_NO_ERROR) SetRealTimePriority(priStr, true);
 #endif
 
 #ifdef MUSCLE_CATCH_SIGNALS_BY_DEFAULT
 # ifdef MUSCLE_AVOID_SIGNAL_HANDLING
-#  error "MUSCLE_CATCH_SIGNALS_BY_DEFAULT and MUSCLE_AVOID_SIGNAL_HANDLING are mutually exclusive compiler flags... you can't specify both!"
+#  error "MUSCLE_CATCH_SIGNALS_BY_DEFAULT and MUSCLE_AVOID_SIGNAL_HANDLING are mutually exclusive compiler flags... you can not specify both!"
 # endif
    if (args.HasName("dontcatchsignals"))
    {
@@ -442,243 +622,13 @@ void HandleStandardDaemonArgs(const Message & args)
    if (args.HasName("catchsignals"))
    {
 # ifdef MUSCLE_AVOID_SIGNAL_HANDLING
-      LogTime(MUSCLE_LOG_ERROR, "Can't enable controlled shutdowns, MUSCLE_AVOID_SIGNAL_HANDLING was specified during compilation!\n");
+      LogTime(MUSCLE_LOG_ERROR, "Can not enable controlled shutdowns, MUSCLE_AVOID_SIGNAL_HANDLING was specified during compilation!\n");
 # else
       _mainReflectServerCatchSignals = true;
       LogTime(MUSCLE_LOG_DEBUG, "Controlled shutdowns (via Control-C) enabled in the main thread.\n");
 # endif
    }
 #endif
-}
-
-/** Gotta define this myself, since atoll() isn't standard. :^( 
-  * Note that this implementation doesn't handle negative numbers!
-  */
-uint64 Atoull(const char * str)
-{
-   TCHECKPOINT;
-
-   uint64 base = 1;
-   uint64 ret  = 0;
-
-   // Move to the last digit in the number
-   const char * s = str;
-   while ((*s >= '0')&&(*s <= '9')) s++;
-
-   // Then iterate back to the beginning, tabulating as we go
-   while((--s >= str)&&(*s >= '0')&&(*s <= '9')) 
-   {
-      ret  += base * ((uint64)(*s-'0'));
-      base *= (uint64)10;
-   }
-   return ret;
-}
-
-int64 Atoll(const char * str)
-{
-   TCHECKPOINT;
-
-   bool negative = false;
-   const char * s = str;
-   while((*s)&&(muscleInRange(*s, '0', '9') == false))
-   {
-      if (*s == '-') negative = (negative == false);
-      s++;
-   }
-   int64 ret = (int64) Atoull(s);
-   return negative ? -ret : ret;
-}
-
-status_t GetHumanReadableTimeValues(uint64 timeUS, HumanReadableTimeValues & v, uint32 timeType)
-{
-   TCHECKPOINT;
-
-   if (timeUS == MUSCLE_TIME_NEVER) return B_ERROR;
-
-   int microsLeft = (int)(timeUS%1000000);
-
-#ifdef WIN32
-   // Borland's localtime() function is buggy, so we'll use the Win32 API instead.
-   static const uint64 diffTime = ((uint64)116444736)*((uint64)1000000000); // add (1970-1601) to convert to Windows time base
-   uint64 winTime = (timeUS*10) + diffTime;  // Convert to (100ns units)
-
-   FILETIME fileTime;
-   fileTime.dwHighDateTime = (DWORD) ((winTime>>32) & 0xFFFFFFFF);
-   fileTime.dwLowDateTime  = (DWORD) ((winTime>> 0) & 0xFFFFFFFF);
-
-   SYSTEMTIME st;
-   if (FileTimeToSystemTime(&fileTime, &st)) 
-   {
-      if (timeType == MUSCLE_TIMEZONE_UTC)
-      {
-         TIME_ZONE_INFORMATION tzi;
-         if ((GetTimeZoneInformation(&tzi) == TIME_ZONE_ID_INVALID)||(SystemTimeToTzSpecificLocalTime(&tzi, &st, &st) == false)) return B_ERROR;
-      }
-      v = HumanReadableTimeValues(st.wYear, st.wMonth-1, st.wDay-1, st.wDayOfWeek, st.wHour, st.wMinute, st.wSecond, microsLeft);
-      return B_NO_ERROR;
-   }
-#else
-   time_t timeS = (time_t) (timeUS/1000000);  // timeS is seconds since 1970
-   struct tm * ts = (timeType == MUSCLE_TIMEZONE_UTC) ? localtime(&timeS) : gmtime(&timeS);  // only convert if it isn't already local
-   if (ts) 
-   {
-      v = HumanReadableTimeValues(ts->tm_year+1900, ts->tm_mon, ts->tm_mday-1, ts->tm_wday, ts->tm_hour, ts->tm_min, ts->tm_sec, microsLeft);
-      return B_NO_ERROR;
-   }
-#endif
-
-   return B_ERROR;
-}
-
-String HumanReadableTimeValues :: ExpandTokens(const String & origString) const
-{
-   if (origString.IndexOf('%') < 0) return origString;
-
-   String newString = origString;
-   (void) newString.Replace("%%", "%");  // do this first!
-   (void) newString.Replace("%T", "%Q %D %Y %h:%m:%s");
-   (void) newString.Replace("%t", "%Y/%M/%D %h:%m:%s");
-   (void) newString.Replace("%f", "%Y-%M-%D_%hh%mm%s");
-
-   static const char * _daysOfWeek[]   = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-   static const char * _monthsOfYear[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-
-   (void) newString.Replace("%Y", String("%1").Arg((int32)GetYear()));
-   (void) newString.Replace("%M", String("%1").Arg((int32)(GetMonth()+1),      "%02i"));
-   (void) newString.Replace("%Q", String("%1").Arg(_monthsOfYear[muscleClamp(GetMonth(), 0, (int)(ARRAYITEMS(_monthsOfYear)-1))]));
-   (void) newString.Replace("%D", String("%1").Arg((int32)(GetDayOfMonth()+1), "%02i"));
-   (void) newString.Replace("%d", String("%1").Arg((int32)(GetDayOfMonth()+1), "%02i"));
-   (void) newString.Replace("%W", String("%1").Arg((int32)(GetDayOfWeek()+1),  "%02i"));
-   (void) newString.Replace("%w", String("%1").Arg((int32)(GetDayOfWeek()+1),  "%02i"));
-   (void) newString.Replace("%q", String("%1").Arg(_daysOfWeek[muscleClamp(GetDayOfWeek(), 0, (int)(ARRAYITEMS(_daysOfWeek)-1))]));
-   (void) newString.Replace("%h", String("%1").Arg((int32)GetHour(),           "%02i"));
-   (void) newString.Replace("%m", String("%1").Arg((int32)GetMinute(),         "%02i"));
-   (void) newString.Replace("%s", String("%1").Arg((int32)GetSecond(),         "%02i"));
-   (void) newString.Replace("%x", String("%1").Arg((int32)GetMicrosecond(),    "%06i"));
-
-   uint32 r1 = rand();
-   uint32 r2 = rand();
-   char buf[64]; sprintf(buf, UINT64_FORMAT_SPEC, (((uint64)r1)<<32)|((uint64)r2));
-   (void) newString.Replace("%r", buf);
-
-   return newString;
-}
-
-String GetHumanReadableTimeString(uint64 timeUS, uint32 timeType)
-{
-   TCHECKPOINT;
-
-   if (timeUS == MUSCLE_TIME_NEVER) return ("(never)");
-   else
-   {
-      HumanReadableTimeValues v;
-      if (GetHumanReadableTimeValues(timeUS, v, timeType) == B_NO_ERROR)
-      {
-         char buf[256];
-         sprintf(buf, "%02i/%02i/%02i %02i:%02i:%02i", v.GetYear(), v.GetMonth()+1, v.GetDayOfMonth()+1, v.GetHour(), v.GetMinute(), v.GetSecond());
-         return String(buf);
-      }
-      return "";
-   }
-}
- 
-#ifdef WIN32
-extern uint64 __Win32FileTimeToMuscleTime(const FILETIME & ft);  // from SetupSystem.cpp
-#endif
-
-uint64 ParseHumanReadableTimeString(const String & s, uint32 timeType)
-{
-   TCHECKPOINT;
-
-   if (s.IndexOfIgnoreCase("never") >= 0) return MUSCLE_TIME_NEVER;
-
-   StringTokenizer tok(s(), "/: ");
-   const char * year   = tok();
-   const char * month  = tok();
-   const char * day    = tok();
-   const char * hour   = tok();
-   const char * minute = tok();
-   const char * second = tok();
-
-#if defined(WIN32) && defined(WINXP)
-   SYSTEMTIME st; memset(&st, 0, sizeof(st));
-   st.wYear      = (WORD) (year   ? atoi(year)   : 0);
-   st.wMonth     = (WORD) (month  ? atoi(month)  : 0);
-   st.wDay       = (WORD) (day    ? atoi(day)    : 0);
-   st.wHour      = (WORD) (hour   ? atoi(hour)   : 0);
-   st.wMinute    = (WORD) (minute ? atoi(minute) : 0);
-   st.wSecond    = (WORD) (second ? atoi(second) : 0);
-
-   if (timeType == MUSCLE_TIMEZONE_UTC)
-   {
-      TIME_ZONE_INFORMATION tzi;
-      if (GetTimeZoneInformation(&tzi) != TIME_ZONE_ID_INVALID) 
-      {
-# if defined(__BORLANDC__) || defined(MUSCLE_USING_OLD_MICROSOFT_COMPILER)
-         // Some compilers' headers don't have this call, so we have to do it the hard way
-         HMODULE lib = LoadLibrary(TEXT("kernel32.dll"));
-         if (lib)
-         {
-#  if defined(_MSC_VER)
-            typedef BOOL (*TzSpecificLocalTimeToSystemTimeProc) (IN LPTIME_ZONE_INFORMATION lpTimeZoneInformation, IN LPSYSTEMTIME lpLocalTime, OUT LPSYSTEMTIME lpUniversalTime);
-#  else
-            typedef WINBASEAPI BOOL WINAPI (*TzSpecificLocalTimeToSystemTimeProc) (IN LPTIME_ZONE_INFORMATION lpTimeZoneInformation, IN LPSYSTEMTIME lpLocalTime, OUT LPSYSTEMTIME lpUniversalTime);
-#  endif
-
-            TzSpecificLocalTimeToSystemTimeProc tzProc = (TzSpecificLocalTimeToSystemTimeProc) GetProcAddress(lib, "TzSpecificLocalTimeToSystemTime");
-            if (tzProc) tzProc(&tzi, &st, &st);
-            if (lib != NULL) FreeLibrary(lib);
-         }
-# else
-         (void) TzSpecificLocalTimeToSystemTime(&tzi, &st, &st);
-# endif
-      }
-   }
-
-   FILETIME fileTime;
-   return (SystemTimeToFileTime(&st, &fileTime)) ? __Win32FileTimeToMuscleTime(fileTime) : 0;
-#else
-   struct tm st; memset(&st, 0, sizeof(st));
-   st.tm_sec  = second ? atoi(second)    : 0;
-   st.tm_min  = minute ? atoi(minute)    : 0;
-   st.tm_hour = hour   ? atoi(hour)      : 0;
-   st.tm_mday = day    ? atoi(day)       : 0;
-   st.tm_mon  = month  ? atoi(month)-1   : 0;
-   st.tm_year = year   ? atoi(year)-1900 : 0;
-   time_t timeS = mktime(&st);
-   if (timeType == MUSCLE_TIMEZONE_LOCAL)
-   {
-      struct tm * t = gmtime(&timeS);
-      if (t) timeS += (timeS-mktime(t));  
-   }
-   return ((uint64)timeS)*1000000;
-#endif
-}
-
-uint64 ParseHumanReadableTimeIntervalString(const String & s)
-{
-   /** Find first digit */
-   const char * d = s();
-   while((*d)&&(muscleInRange(*d, '0', '9') == false)) d++;
-   if (*d == '\0') return 0;
-
-   /** Find first letter */
-   const char * l = s();
-   while((*l)&&(muscleInRange(*l, 'A', 'Z') == false)&&(muscleInRange(*l, 'a', 'z') == false)) l++;
-   if (*l == '\0') return 0;
-
-   const uint64 MICROS_PER_SECOND = 1000000;
-   uint64 multiplier = MICROS_PER_SECOND;   // default units is seconds
-   String tmp(l); tmp = tmp.ToLowerCase();
-        if ((tmp.StartsWith("us"))||(tmp.StartsWith("micro"))) multiplier =                            1;  // micros -> micros
-   else if ((tmp.StartsWith("ms"))||(tmp.StartsWith("milli"))) multiplier =                         1000;  // millis -> micros
-   else if (tmp.StartsWith("s"))                               multiplier =            MICROS_PER_SECOND;  // secs   -> micros
-   else if (tmp.StartsWith("m"))                               multiplier =         60*MICROS_PER_SECOND;  // mins   -> micros
-   else if (tmp.StartsWith("h"))                               multiplier =      60*60*MICROS_PER_SECOND;  // hours  -> micros
-   else if (tmp.StartsWith("d"))                               multiplier =   24*60*60*MICROS_PER_SECOND;  // days  -> micros
-   else if (tmp.StartsWith("w"))                               multiplier = 7*24*60*60*MICROS_PER_SECOND;  // days  -> micros
-
-   return Atoull(d)*multiplier;
 }
 
 static bool _isDaemonProcess = false;
@@ -726,7 +676,7 @@ status_t SpawnDaemonProcess(bool & returningAsParent, const char * optNewDir, co
    //    could make it so that an administrator couldn't unmount a filesystem, because it was our
    //    current directory. [Equivalently, we could change to any directory containing files important
    //    to the daemon's operation.]
-   if (optNewDir) (void) chdir(optNewDir);
+   if ((optNewDir)&&(chdir(optNewDir) != 0)) return B_ERROR;
 
    // 5. umask(0) so that we have complete control over the permissions of anything we write.
    //    We don't know what umask we may have inherited. [This step is optional]
@@ -751,7 +701,7 @@ status_t SpawnDaemonProcess(bool & returningAsParent, const char * optNewDir, co
    if (optOutputTo) 
    {
       outfd = open(optOutputTo, O_WRONLY | (createIfNecessary ? O_CREAT : 0), mode);
-      if (outfd < 0) LogTime(MUSCLE_LOG_ERROR, "BecomeDaemonProcess():  Couldn't open %s to redirect stdout, stderr\n", optOutputTo);
+      if (outfd < 0) LogTime(MUSCLE_LOG_ERROR, "BecomeDaemonProcess():  Could not open %s to redirect stdout, stderr\n", optOutputTo);
    }
    if (outfd >= 0) (void) dup2(outfd, STDOUT_FILENO);
    if (outfd >= 0) (void) dup2(outfd, STDERR_FILENO);
@@ -797,7 +747,7 @@ void RemoveANSISequences(String & s)
 	       if (*data) data++;  // and skip over the trailing letter too.
 	    break;
          }
-	 s = s.Substring(0, idx) + s.Substring(data-s());  // remove the escape substring
+	 s = s.Substring(0, idx) + s.Substring((uint32)(data-s()));  // remove the escape substring
       }
       else break;
    }
@@ -866,6 +816,12 @@ status_t NybbleizeData(const ByteBuffer & buf, String & retString)
 status_t DenybbleizeData(const String & nybbleizedText, ByteBuffer & retBuf)
 {
    uint32 numBytes = nybbleizedText.Length();
+   if ((numBytes%2)!=0)
+   {
+      LogTime(MUSCLE_LOG_ERROR, "DenybblizeData:  Nybblized text [%s] has an odd length; that shouldn't ever happen!\n", nybbleizedText());
+      return B_ERROR;
+   }
+
    if (retBuf.SetNumBytes(numBytes/2, false) != B_NO_ERROR) return B_ERROR;
 
    uint8 * b = retBuf.GetBuffer();
@@ -873,6 +829,11 @@ status_t DenybbleizeData(const String & nybbleizedText, ByteBuffer & retBuf)
    {
       char c1 = nybbleizedText[i+0];
       char c2 = nybbleizedText[i+1];
+      if ((muscleInRange(c1, 'A', 'P') == false)||(muscleInRange(c2, 'A', 'P') == false))
+      {
+         LogTime(MUSCLE_LOG_ERROR, "DenybblizeData:  Nybblized text [%s] contains characters other than A through P!\n", nybbleizedText());
+         return B_ERROR;
+      }
       *b++ = ((c1-'A')<<0)|((c2-'A')<<4);
    }
    return B_NO_ERROR;
@@ -934,12 +895,12 @@ String HexBytesToString(const uint8 * buf, uint32 numBytes)
 
 ByteBufferRef ParseHexBytes(const char * buf)
 {
-   ByteBufferRef bb = GetByteBufferFromPool(strlen(buf));
+   ByteBufferRef bb = GetByteBufferFromPool((uint32)strlen(buf));
    if (bb())
    {
       uint8 * b = bb()->GetBuffer();
       uint32 count = 0;
-      StringTokenizer tok(buf, ", \t\r\n");
+      StringTokenizer tok(buf, " \t\r\n");
       const char * next;
       while((next = tok()) != NULL) 
       {
@@ -1061,5 +1022,79 @@ void Win32AllocateStdioConsole()
    freopen("conout$", "w", stderr);
 }
 #endif
+
+#if defined(__linux__) || defined(__APPLE__)
+static double ParseMemValue(const char * b)
+{
+   while((*b)&&(muscleInRange(*b, '0', '9') == false)) b++;
+   return muscleInRange(*b, '0', '9') ? atof(b) : -1.0;
+}
+#endif
+
+float GetSystemMemoryUsagePercentage()
+{
+#if defined(__linux__)
+   FILE * fpIn = fopen("/proc/meminfo", "r");
+   if (fpIn)
+   {
+      double memTotal = -1.0, memFree = -1.0, buffered = -1.0, cached = -1.0;
+      char buf[512];
+      while((fgets(buf, sizeof(buf), fpIn) != NULL)&&((memTotal<=0.0)||(memFree<0.0)||(buffered<0.0)||(cached<0.0)))
+      {
+              if (strncmp(buf, "MemTotal:", 9) == 0) memTotal = ParseMemValue(buf+9);
+         else if (strncmp(buf, "MemFree:",  8) == 0) memFree  = ParseMemValue(buf+8);
+         else if (strncmp(buf, "Buffers:",  8) == 0) buffered = ParseMemValue(buf+8);
+         else if (strncmp(buf, "Cached:",   7) == 0) cached   = ParseMemValue(buf+7);
+      }
+      fclose(fpIn);
+
+      if ((memTotal > 0.0)&&(memFree >= 0.0)&&(buffered >= 0.0)&&(cached >= 0.0))
+      {
+         double memUsed = memTotal-(memFree+buffered+cached);
+         return (float) (memUsed/memTotal);
+      }
+   }
+#elif defined(__APPLE__)
+   FILE * fpIn = popen("/usr/bin/vm_stat", "r");
+   if (fpIn)
+   {
+      double pagesUsed = 0.0, totalPages = 0.0;
+      char buf[512];
+      while(fgets(buf, sizeof(buf), fpIn) != NULL)
+      {
+         if (strncmp(buf, "Pages", 5) == 0)
+         {
+            double val = ParseMemValue(buf);
+            if (val >= 0.0)
+            {
+               if ((strncmp(buf, "Pages wired", 11) == 0)||(strncmp(buf, "Pages active", 12) == 0)) pagesUsed += val;
+               totalPages += val;
+            }
+         }
+         else if (strncmp(buf, "Mach Virtual Memory Statistics", 30) != 0) break;  // Stop at "Translation Faults", we don't care about anything at or below that
+      }
+      pclose(fpIn);
+
+      if (totalPages > 0.0) return (float) (pagesUsed/totalPages);
+   }
+#elif defined(WIN32) && !defined(__MINGW32__)
+   MEMORYSTATUSEX stat; memset(&stat, 0, sizeof(stat));
+   stat.dwLength = sizeof(stat);
+   GlobalMemoryStatusEx(&stat);
+   return ((float)stat.dwMemoryLoad)/100.0f;
+#endif
+   return -1.0f;
+}
+
+bool ParseBool(const String & word, bool defaultValue)
+{
+   static const char * _onWords[]  = {"on",  "enable",  "enabled",  "true",  "t", "y", "yes", "1"};
+   static const char * _offWords[] = {"off", "disable", "disabled", "false", "f", "n", "no",  "0"};
+
+   String s = word.Trim().ToLowerCase();
+   for (uint32 i=0; i<ARRAYITEMS(_onWords);  i++) if (s == _onWords[i])  return true;
+   for (uint32 i=0; i<ARRAYITEMS(_offWords); i++) if (s == _offWords[i]) return false;
+   return defaultValue; 
+}
 
 }; // end namespace muscle

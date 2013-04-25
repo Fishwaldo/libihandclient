@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
 
 #include "reflector/AbstractReflectSession.h"
 #include "system/SignalMultiplexer.h"
@@ -9,7 +9,7 @@ namespace muscle {
   * catch signals (e.g. SIGINT on Unix/MacOS, Console signals on Windows)
   * and react by initiating a controlled shutdown of the server.
   */
-class SignalHandlerSession : public AbstractReflectSession, public ISignalHandler
+class SignalHandlerSession : public AbstractReflectSession, public ISignalHandler, private CountedObject<SignalHandlerSession>
 {
 public:
    /** Default constructor. */
@@ -37,5 +37,18 @@ protected:
 private:
    ConstSocketRef _handlerSocket;
 };
+
+/** Returns true iff any SignalHandlerSession ever caught a signal since this process was started. */
+bool WasSignalCaught();
+
+/** Sets whether or not the ReflectServer in the main thread should try to handle signals.
+  * Default state is false, unless MUSCLE_CATCH_SIGNALS_BY_DEFAULT was defined at compile time.
+  * Note that this flag is read at the beginning of ReflectServer::ServerProcessLoop(), so
+  * you must set it before then for it to have any effect.
+  */
+void SetMainReflectServerCatchSignals(bool enable);
+
+/** Returns true iff the main-ReflectServer-handle-signals flags is set to true. */
+bool GetMainReflectServerCatchSignals();
 
 }; // end namespace muscle

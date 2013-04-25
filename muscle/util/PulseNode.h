@@ -1,9 +1,10 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MusclePulseNode_h
 #define MusclePulseNode_h
 
 #include "util/TimeUtilityFunctions.h"
+#include "util/CountedObject.h"
 
 namespace muscle {
 
@@ -14,7 +15,7 @@ class PulseNodeManager;
  *  its PulseNodeManager.   (Typically the PulseNodeManager role is played by
  *  the ReflectServer class)
  */
-class PulseNode
+class PulseNode : private CountedObject<PulseNode>
 {
 public:
    /** Default constructor */
@@ -133,7 +134,7 @@ public:
     *  Useful for any object that wants to limit the maximum duration of its timeslice
     *  in the PulseNodeManager's event loop.
     */
-   uint64 GetCycleStartTime() const {return _cycleStartedAt;}
+   uint64 GetCycleStartTime() const {return _parent ? _parent->GetCycleStartTime() : _cycleStartedAt;}
 
    /** Sets the maximum number of microseconds that this class should allow its callback
     *  methods to execute for (relative to the cycle start time, as shown above).  Note 
@@ -155,7 +156,6 @@ public:
     */
    bool IsSuggestedTimeSliceExpired() const {return ((_timeSlicingSuggested)&&(GetRunTime64() >= (_cycleStartedAt+_maxTimeSlice)));}
 
-protected:
    /**
     * Sets a flag to indicate that GetPulseTime() should be called on this object.
     * Call this whenever you've decided to reschedule your pulse time outside
@@ -166,6 +166,9 @@ protected:
     *                        the prevResult value will be left alone.
     */
    void InvalidatePulseTime(bool clearPrevResult = true); 
+
+   /** Returns a pointer to this PulseNode's parent PulseNode, if any. */
+   PulseNode * GetPulseParent() const {return _parent;}
 
 private:
    void ReschedulePulseChild(PulseNode * child, int toList);

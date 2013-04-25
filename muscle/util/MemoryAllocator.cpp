@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */ 
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */ 
 
 #include "util/MemoryAllocator.h"
 
@@ -32,9 +32,8 @@ size_t ProxyMemoryAllocator :: GetMaxNumBytes() const
 
 size_t ProxyMemoryAllocator :: GetNumAvailableBytes(size_t currentlyAllocated) const
 {
-   return (_slaveRef()) ? _slaveRef()->GetNumAvailableBytes(currentlyAllocated) : MUSCLE_NO_LIMIT;
+   return (_slaveRef()) ? _slaveRef()->GetNumAvailableBytes(currentlyAllocated) : ((size_t)-1);
 }
-
 
 UsageLimitProxyMemoryAllocator :: UsageLimitProxyMemoryAllocator(const MemoryAllocatorRef & slaveRef, size_t maxBytes) : ProxyMemoryAllocator(slaveRef), _maxBytes(maxBytes)
 {

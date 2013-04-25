@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleXorDataIO_h
 #define MuscleXorDataIO_h
@@ -13,7 +13,7 @@ namespace muscle {
   * holds internally.  This can be useful if you want to obfuscate your data
   * a little bit before sending it out to disk or over the network.
   */
-class XorDataIO : public DataIO
+class XorDataIO : public DataIO, public CountedObject<XorDataIO>
 {
 public:
    /** Default Constructor.  Be sure to set a child dataIO with SetChildDataIO()
@@ -51,7 +51,8 @@ public:
    virtual uint64 GetOutputStallLimit() const {return _childIO() ? _childIO()->GetOutputStallLimit() : MUSCLE_TIME_NEVER;}
    virtual void FlushOutput() {if (_childIO()) _childIO()->FlushOutput();}
    virtual void Shutdown() {if (_childIO()) _childIO()->Shutdown(); _childIO.Reset();}
-   virtual const ConstSocketRef & GetSelectSocket() const {return _childIO() ? _childIO()->GetSelectSocket() : GetNullSocket();}
+   virtual const ConstSocketRef & GetReadSelectSocket()  const {return _childIO() ? _childIO()->GetReadSelectSocket()  : GetNullSocket();}
+   virtual const ConstSocketRef & GetWriteSelectSocket() const {return _childIO() ? _childIO()->GetWriteSelectSocket() : GetNullSocket();}
    virtual status_t GetReadByteTimeStamp(int32 whichByte, uint64 & retStamp) const {return _childIO() ? _childIO()->GetReadByteTimeStamp(whichByte, retStamp) : B_ERROR;}
 
    virtual bool HasBufferedOutput() const {return _childIO() ? _childIO()->HasBufferedOutput() : false;}

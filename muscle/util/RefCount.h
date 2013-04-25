@@ -1,10 +1,11 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */ 
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */ 
 
 #ifndef MuscleRefCount_h 
 #define MuscleRefCount_h 
 
 #include "util/Cloneable.h" 
 #include "util/ObjectPool.h" 
+#include "util/PointerAndBool.h" 
 #include "system/AtomicCounter.h"
 
 namespace muscle {
@@ -19,7 +20,7 @@ class RefCountable;
    typedef Ref<RefCountableClassName>      RefCountableClassName##Ref
 
 /** This class represents objects that can be reference-counted using the Ref class. 
-  * Note that any object that can be reference counted can also be pooled and recycled.
+  * Note that any object that can be reference-counted can also be cached and recycled via an ObjectPool.
   */
 class RefCountable
 {
@@ -36,7 +37,7 @@ public:
    /** Assigment operator.  deliberately implemented as a no-op! */
    inline RefCountable &operator=(const RefCountable &) {return *this;}
 
-   /** Increments the counter and returns true iff the new value is zero.  Thread safe. */
+   /** Increments the counter.  Thread safe. */
    inline void IncrementRefCount() const {_refCount.AtomicIncrement();}
 
    /** Decrements the counter and returns true iff the new value is zero.  Thread safe. */
@@ -84,7 +85,7 @@ public:
     *  Default constructor.
     *  Creates a NULL reference (suitable for later initialization with SetRef(), or the assignment operator)
     */
-   ConstRef() : _item(NULL), _doRefCount(true) {/* empty */}
+   ConstRef() : _item(NULL, true) {/* empty */}
 
    /** 
      * Creates a new reference-count for the given item.
@@ -98,19 +99,29 @@ public:
      *                   But if you do that, it allows the possibility of the object going away while
      *                   other Refs are still using it, so be careful!
      */
-   ConstRef(const Item * item, bool doRefCount = true) : _item(item), _doRefCount(doRefCount) {RefItem();} 
+   explicit ConstRef(const Item * item, bool doRefCount = true) : _item(item, doRefCount)
+   {
+      RefItem();
+   } 
 
    /** Copy constructor.  Creates an additional reference to the object referenced by (copyMe).
     *  The referenced object won't be deleted until ALL Refs that reference it are gone.
     */
-   ConstRef(const ConstRef & copyMe) : _item(NULL), _doRefCount(true) {*this = copyMe;}
+   ConstRef(const ConstRef & copyMe) : _item(NULL, true)
+   {
+      *this = copyMe;
+   }
 
    /** Attempts to set this reference by downcasting the reference in the provided ConstRefCountableRef.
      * If the downcast cannot be done (via dynamic_cast) then we become a NULL reference.
      * @param ref The read-only RefCountable reference to set ourselves from.
      * @param junk This parameter is ignored; it is just here to disambiguate constructors.
      */
-   ConstRef(const ConstRefCountableRef & ref, bool junk) : _item(NULL), _doRefCount(true) {(void) junk; (void) SetFromRefCountableRef(ref);}
+   ConstRef(const ConstRefCountableRef & ref, bool junk) : _item(NULL, true)
+   {
+      (void) junk; 
+      (void) SetFromRefCountableRef(ref);
+   }
 
    /** Unreferences the held data item.  If this is the last ConstRef that
     *  references the held data item, the data item will be deleted or recycled at this time.
@@ -132,21 +143,21 @@ public:
      */
    void SetRef(const Item * item, bool doRefCount = true)
    {
-      if (item == _item)
+      if (item == this->GetItemPointer())
       {
-         if (doRefCount != _doRefCount)
+         if (doRefCount != this->IsRefCounting())
          {
             if (doRefCount)
             {
                // We weren't ref-counting before, but the user wants us to start
-               _doRefCount = true;
+               SetRefCounting(true);
                RefItem();
             }
             else 
             {
                // We were ref-counting before, but the user wants us to drop it
                UnrefItem();
-               _doRefCount = false;
+               SetRefCounting(false);
             } 
          }
       }
@@ -154,16 +165,15 @@ public:
       {
          // switch items
          UnrefItem();
-          _item       = item;
-          _doRefCount = doRefCount;
+         _item.SetPointerAndBool(item, doRefCount);
          RefItem();
       }
    }
 
    /** Assigment operator.
-    *  Unreferences the previous held data item, and adds a reference to the the data item of (rhs).
+    *  Unreferences the previous held data item, and adds a reference to the data item of (rhs).
     */
-   inline ConstRef &operator=(const ConstRef & rhs) {if (this != &rhs) SetRef(rhs._item, rhs._doRefCount); return *this;}
+   inline ConstRef &operator=(const ConstRef & rhs) {SetRef(rhs.GetItemPointer(), rhs.IsRefCounting()); return *this;}
 
    /** Similar to the == operator, except that this version will also call the comparison operator
      * on the objects themselves if necessary, to determine exact equality.  (Compare with the ==
@@ -171,32 +181,32 @@ public:
      */
    bool IsDeeplyEqualTo(const ConstRef & rhs) const
    {
-      if (_item == rhs._item) return true;
-      if ((_item != NULL) != (rhs._item != NULL)) return false;
-      return ((_item == NULL)||(*_item == *rhs._item));
+      const Item * myItem  = this->GetItemPointer();
+      const Item * hisItem = rhs.GetItemPointer();
+      if (myItem == hisItem) return true;
+      if ((myItem != NULL) != (hisItem != NULL)) return false;
+      return ((myItem == NULL)||(*myItem == *hisItem));
    }
 
    /** Returns true iff both Refs are referencing the same data. */
-   bool operator ==(const ConstRef &rhs) const {return _item == rhs._item;}
+   bool operator ==(const ConstRef &rhs) const {return this->GetItemPointer() == rhs.GetItemPointer();}
  
    /** Returns true iff both Refs are not referencing the same data. */
-   bool operator !=(const ConstRef &rhs) const {return _item != rhs._item;}
+   bool operator !=(const ConstRef &rhs) const {return this->GetItemPointer() != rhs.GetItemPointer();}
  
+   /** Compares the pointers the two Refs are referencing. */
+   bool operator < (const ConstRef &rhs) const {return this->GetItemPointer() < rhs.GetItemPointer();}
+
+   /** Compares the pointers the two Refs are referencing. */
+   bool operator > (const ConstRef &rhs) const {return this->GetItemPointer() > rhs.GetItemPointer();}
+
    /** Returns the ref-counted data item.  The returned data item
     *  is only guaranteed valid for as long as this RefCount object exists.
     */
-   const Item * GetItemPointer() const {return _item;}
+   const Item * GetItemPointer() const {return _item.GetPointer();}
 
-   /** This is the same as GetItemPointer(), except that it can be safely
-    *  called on a NULL ConstRef object, because it checks the (this) pointer
-    *  and returns NULL if (this) was NULL.
-    *  @note This function is unusual in that it safe to call this function on
-    *        a NULL ConstRef pointer!
-    */
-   const Item * CheckedGetItemPointer() const {return this ? _item : NULL;}
-
-   /** Convenience synonym for GetItemPointerConst(). */
-   const Item * operator()() const {return _item;}
+   /** Convenience synonym for GetItemPointer(). */
+   const Item * operator()() const {return this->GetItemPointer();}
 
    /** Unreferences our held data item (if any), and turns this object back into a NULL reference.  
     *  (equivalent to *this = ConstRef();)
@@ -206,30 +216,34 @@ public:
    /** Equivalent to Reset(), except that this method will not delete or recycle 
      * the held object under any circumstances.  Use with caution.
      */
-   void Neutralize() {if ((_doRefCount)&&(_item)) (void) _item->DecrementRefCount(); _item = NULL;}
+   void Neutralize() 
+   {
+      const Item * item = this->IsRefCounting() ? this->GetItemPointer() : NULL;
+      if (item) (void) item->DecrementRefCount();  // remove our ref-count from the item but deliberately never delete the item 
+      _item.SetPointer(NULL);
+   }
 
    /** Swaps this ConstRef's contents with those of the specified ConstRef.
      * @param swapWith ConstRef to swap state with.
      */
    void SwapContents(ConstRef & swapWith)
    {
-      muscleSwap(_item,       swapWith._item); 
-      muscleSwap(_doRefCount, swapWith._doRefCount);
+      muscleSwap(_item, swapWith._item); 
    }
 
    /** Returns true iff we are refcounting our held object, or false
      * if we are merely pointing to it (see constructor documentation for details)
      */
-   bool IsRefCounting() const {return _doRefCount;}
+   bool IsRefCounting() const {return _item.GetBool();}
 
    /** Convenience method:  Returns a ConstRefCountableRef object referencing the same RefCountable as this typed ref. */
-   ConstRefCountableRef GetRefCountableRef() const {return ConstRefCountableRef(_item, _doRefCount);}
+   ConstRefCountableRef GetRefCountableRef() const {return ConstRefCountableRef(this->GetItemPointer(), this->IsRefCounting());}
 
    /** Convenience method; attempts to set this typed ConstRef to be referencing the same item as the given ConstRefCountableRef.  
      * If the conversion cannot be done, our state will remain unchanged.
      * @param refCountableRef The ConstRefCountableRef to set ourselves from.
      * @returns B_NO_ERROR if the conversion was successful, or B_ERROR if the ConstRefCountableRef's item
-     *          type is incompatible with our own item type (as dictated by dynamic_cast)
+     *                     type is incompatible with our own item type (as dictated by dynamic_cast)
      */
    status_t SetFromRefCountableRef(const ConstRefCountableRef & refCountableRef)
    {
@@ -256,6 +270,12 @@ public:
       SetRef(static_cast<const Item *>(refCountableRef()), refCountableRef.IsRefCounting());
    }
 
+   /** Returns true iff we are pointing to a valid item (i.e. if (GetItemPointer() != NULL)) */
+   bool IsValid() const {return (this->GetItemPointer() != NULL);}
+
+   /** Returns true iff we are not pointing to a valid item (i.e. if (GetItemPointer() == NULL)) */
+   bool IsNull() const {return (this->GetItemPointer() == NULL);}
+
    /** Returns true only if we are certain that no other Refs are pointing
      * at the same RefCountable object that we are.  If this Ref's do-reference-counting
      * flag is false, then this method will always return false, since we can't
@@ -264,7 +284,8 @@ public:
      */
    bool IsRefPrivate() const
    {
-      return ((_item == NULL)||((_doRefCount)&&(_item->GetRefCount() == 1)));
+      const Item * item = this->GetItemPointer();
+      return ((item == NULL)||((this->IsRefCounting())&&(item->GetRefCount() == 1)));
    }
 
    /** This method will check our referenced object to see if there is any
@@ -294,39 +315,56 @@ public:
    /** Makes a copy of our held Item and returns it in a non-const Ref object,
      * or returns a NULL Ref on out-of-memory (or if we aren't holding an Item).
      */
-   Ref<Item> Clone()
+   Ref<Item> Clone() const
    {
-      if (_item)
+      const Item * item = this->GetItemPointer(); 
+      if (item)
       {
-         AbstractObjectManager * m = _item->GetManager();
-         Item * newItem = m ? static_cast<Item *>(m->ObtainObjectGeneric()) : static_cast<Item *>(CloneObject(*_item));
+         AbstractObjectManager * m = item->GetManager();
+         Item * newItem = m ? static_cast<Item *>(m->ObtainObjectGeneric()) : static_cast<Item *>(CloneObject(*item));
          if (newItem) return Ref<Item>(newItem);
                  else WARN_OUT_OF_MEMORY;
       }
       return Ref<Item>();
    }
 
-   /** This method allows Refs to be keys in Hashtables. */
-   uint32 HashCode() const {return (uint32)((unsigned long)_item);}  // double-cast for AMD64
+   /** This method allows Refs to be keys in Hashtables.  Node that we hash on the pointer's value, not the object it points to! */
+   uint32 HashCode() const {return CalculateHashCode(this->GetItemPointer());}
 
 private:
-   void RefItem() {if ((_doRefCount)&&(_item)) _item->IncrementRefCount();}
+   void SetRefCounting(bool rc) {_item.SetBool(rc);}
+
+   void RefItem() 
+   {
+      const Item * item = this->IsRefCounting() ? this->GetItemPointer() : NULL; 
+      if (item) item->IncrementRefCount();
+   }
+
    void UnrefItem()
    {
-      if (_item)
+      const Item * item = this->GetItemPointer();
+      if (item)
       {
-         if ((_doRefCount)&&(_item->DecrementRefCount()))
+         bool isRefCounting = this->IsRefCounting();
+         if ((isRefCounting)&&(item->DecrementRefCount()))
          {
-            AbstractObjectManager * m = _item->GetManager();
-            if (m) m->RecycleObject(const_cast<Item *>(_item));
-              else delete _item;
+            AbstractObjectManager * m = item->GetManager();
+            if (m) m->RecycleObject(const_cast<Item *>(item));
+              else delete item;
          }
-         _item = NULL;
+         _item.SetPointer(NULL);
       }
    }
    
-   const Item * _item; 
-   bool _doRefCount;
+   PointerAndBool<const Item> _item;
+};
+
+/** When we compare references, we really want to be comparing what those references point to */
+template <typename ItemType> class CompareFunctor<ConstRef<ItemType> >
+{
+public:
+   /** Compares the two ConstRef's strcmp() style, returning zero if they are equal, a negative value if (item1) comes first, or a positive value if (item2) comes first. */
+   int Compare(const ConstRef<ItemType> & item1, const ConstRef<ItemType> & item2, void * cookie) const {return CompareFunctor<const ItemType *>().Compare(item1(), item2(), cookie);}
 };
 
 /**
@@ -356,7 +394,7 @@ public:
      *                   But if you do that, it allows the possibility of the object going away while
      *                   other Refs are still using it, so be careful!
      */
-   Ref(Item * item, bool doRefCount = true) : ConstRef<Item>(item, doRefCount) {/* empty */}
+   explicit Ref(Item * item, bool doRefCount = true) : ConstRef<Item>(item, doRefCount) {/* empty */}
 
    /** Copy constructor.  Creates an additional reference to the object referenced by (copyMe).
     *  The referenced object won't be deleted until ALL Refs that reference it are gone.
@@ -375,72 +413,34 @@ public:
     */
    Item * GetItemPointer() const {return const_cast<Item *>((static_cast<const ConstRef<Item> *>(this))->GetItemPointer());}
 
-   /** This is the same as GetItemPointer(), except that it can be safely
-    *  called on a NULL Ref object, because it checks the (this) pointer
-    *  and returns NULL if (this) was NULL.
-    *  @note This function is unusual in that it safe to call this function on
-    *        a NULL Ref pointer!
-    */
-   Item * CheckedGetItemPointer() const {return this ? GetItemPointer() : NULL;}
-
    /** Read-write implementation of the convenience synonym for GetItemPointer(). */
    Item * operator()() const {return GetItemPointer();}
 
    /** Convenience method:  Returns a read/write RefCountableRef object referencing the same RefCountable as this typed ref. */
    RefCountableRef GetRefCountableRef() const {return RefCountableRef(GetItemPointer(), this->IsRefCounting());}
+
+   /** Redeclared here so that the AutoChooseHashFunctor code will see it */
+   uint32 HashCode() const {return this->ConstRef<Item>::HashCode();}
 };
+
+/** This function works similarly to ConstRefCount::GetItemPointer(), except that this function 
+ *  can be safely called with a NULL ConstRef object as an argument.
+ *  @param rt Pointer to a const reference object, or NULL.
+ *  @returns If rt is NULL, this function returns NULL.  Otherwise it returns rt->GetItemPointer().
+ */
+template <class Item> inline const Item * CheckedGetItemPointer(const ConstRef<Item> * rt) {return rt ? rt->GetItemPointer() : NULL;}
+
+/** This function works similarly to RefCount::GetItemPointer(), except that this function 
+ *  can be safely called with a NULL Ref object as an argument.
+ *  @param rt Pointer to a const reference object, or NULL.
+ *  @returns If rt is NULL, this function returns NULL.  Otherwise it returns rt->GetItemPointer().
+ */
+template <class Item> inline Item * CheckedGetItemPointer(const Ref<Item> * rt) {return rt ? rt->GetItemPointer() : NULL;}
 
 /** Convenience method for converting a ConstRef into a non-const Ref.  Only call this method if you are sure you know what you are doing,
   * because usually the original ConstRef was declared as a ConstRef for a good reason!
   */
 template <class Item> inline Ref<Item> CastAwayConstFromRef(const ConstRef<Item> & constItem) {return Ref<Item>(const_cast<Item *>(constItem()), constItem.IsRefCounting());}
-
-// VC++6 and earlier can't handle partial template specialization, so don't let it see this
-// To compile using them, you'll have to write an explicit HashFunctor.  Sucks, eh?
-// At least you can use the DECLARE_HASHTABLE_KEY_CLASS macro to make it quicker for you.
-#ifndef MUSCLE_USING_OLD_MICROSOFT_COMPILER
-template <class T> class HashFunctor;
-
-/** This HashFunctor lets you use ConstRef objects as keys in a Hashtable.  They will be hashed based on the pointer of the object they hold. */
-template <class Item> class HashFunctor<ConstRef<Item> >
-{
-public:
-   /** Returns a hash code corresponding to the specified ConstRef object.
-     * @param ref The ConstRef object that is being used as a key in the Hashtable.
-     */
-   uint32 operator()(const ConstRef<Item> & ref) const {return ref.HashCode();}
-};
-
-/** This HashFunctor lets you use ConstRef pointers as keys in a Hashtable.  They will be hashed based on the pointer of the object they hold. */
-template <class Item> class HashFunctor<const ConstRef<Item> * >
-{
-public:
-   /** Returns a hash code corresponding to the specified ConstRef pointer.
-     * @param ref The ConstRef pointer that is being used as a key in the Hashtable.
-     */
-   uint32 operator()(const ConstRef<Item> * ref) const {return ref->HashCode();}
-};
-
-/** This HashFunctor lets you use Ref objects as keys in a Hashtable.  They will be hashed based on the pointer of the object they hold. */
-template <class Item> class HashFunctor<Ref<Item> >
-{
-public:
-   /** Returns a hash code corresponding to the specified Ref object.
-     * @param ref The Ref object that is being used as a key in the Hashtable.
-     */
-   uint32 operator()(const Ref<Item> & ref) const {return ref.HashCode();}
-};
-
-/** This HashFunctor lets you use Ref pointers as keys in a Hashtable.  They will be hashed based on the pointer of the object they hold. */
-template <class Item> class HashFunctor<const Ref<Item> * >
-{
-public:
-   /** Returns a hash code corresponding to the specified Ref pointer.
-     * @param ref The Ref pointer that is being used as a key in the Hashtable.
-     */
-   uint32 operator()(const Ref<Item> * ref) const {return ref->HashCode();}
-};
-#endif
 
 }; // end namespace muscle
 

@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleAbstractReflectSession_h
 #define MuscleAbstractReflectSession_h
@@ -6,6 +6,7 @@
 #include "iogateway/AbstractMessageIOGateway.h"
 #include "reflector/AbstractSessionIOPolicy.h"
 #include "reflector/ServerComponent.h"
+#include "support/TamperEvidentValue.h"
 #include "util/Queue.h"
 #include "util/RefCount.h"
 
@@ -15,7 +16,7 @@ namespace muscle {
  *  AbstractReflectSession objects when needed.  It is used by the
  *  ReflectServer classes to generate sessions when connections are received.
  */
-class ReflectSessionFactory : public ServerComponent
+class ReflectSessionFactory : public ServerComponent, private CountedObject<ReflectSessionFactory>
 {
 public:
    /** Constructor.  Our globally unique factory ID is assigned here. */
@@ -56,6 +57,22 @@ protected:
     * @param userData any userData value you care to include.  Defaults to NULL.
     */
    void BroadcastToAllSessions(const MessageRef & msgRef, void * userData = NULL);
+
+   /**
+    * Convenience method:  Calls MessageReceivedFromFactory() on all session
+    * objects of the specified type.  Saves you from having to do your own iteration every time you
+    * want to broadcast something.
+    * @param msgRef a reference to the Message you wish to broadcast
+    * @param userData any userData value you care to include.  Defaults to NULL.
+    */
+   template <class SessionType> void BroadcastToAllSessionsOfType(const MessageRef & msgRef, void * userData = NULL)
+   {
+      for (HashtableIterator<const String *, AbstractReflectSessionRef> iter(GetSessions()); iter.HasData(); iter++)
+      {
+         SessionType * session = dynamic_cast<SessionType *>(iter.GetValue()());
+         if (session) session->MessageReceivedFromFactory(*this, msgRef, userData);
+      }
+   }
 
    /**
     * Convenience method:  Calls MessageReceivedFromFactory() on all session-factory
@@ -100,7 +117,7 @@ private:
  *  client-server connection.  This class contains no message routing logic of its own,
  *  but defines the interface so that subclasses can do so.
  */
-class AbstractReflectSession : public ServerComponent, public AbstractGatewayMessageReceiver
+class AbstractReflectSession : public ServerComponent, public AbstractGatewayMessageReceiver, private CountedObject<AbstractReflectSession>
 {
 public:
    /** Default Constructor. */
@@ -214,6 +231,12 @@ public:
     */
    const AbstractMessageIOGatewayRef & GetGateway() const {return _gateway;}
 
+   /** 
+     * Convenience method:  returns a reference DataIO object attached to this session's
+     * current gateway object, or NULL if there isn't one.
+     */
+   const DataIORef & GetDataIO() const;
+
    /** Should return true iff we have data pending for output.
     *  Default implementation calls HasBytesToOutput() on our installed AbstractDataIOGateway object,
     *  if we have one, or returns false if we don't.
@@ -315,8 +338,10 @@ public:
      * manually.  Typically you don't need to call this; so only call this method if you really know
      * what you are doing and why you need to. 
      * @param iap The IP address and port that this session connected to asynchronously.
+     * @param reconnectViaTCP If true, then any calls to Reconnect() will try to reconnect to this address via a
+     *                        standard TCP connection.  If false, this address will be ignored by Reconnect().
      */
-   void SetAsyncConnectDestination(const IPAddressAndPort & iap) {_asyncConnectDest = iap;}
+   void SetAsyncConnectDestination(const IPAddressAndPort & iap, bool reconnectViaTCP) {_asyncConnectDest = iap; _reconnectViaTCP = reconnectViaTCP;}
 
    /** Returns the node path of the node representing this session (e.g. "/192.168.1.105/17") */
    virtual const String & GetSessionRootPath() const {return _sessionRootPath;}
@@ -335,6 +360,23 @@ public:
      */
    uint64 GetAutoReconnectDelay() const {return _autoReconnectDelay;}
 
+   /** Sets the maximum time that we should allow an asynchronous-connect to continue before
+     * forcibly aborting it.  Default behavior is determined by the MUSCLE_MAX_ASYNC_CONNECT_DELAY_MICROSECONDS
+     * compiler define, whose default value is MUSCLE_TIME_NEVER, aka let the asynchronous connect
+     * go on for as long as the operating system cares to allow it to.
+     * Note that this setting is only relevant for sessions that were attached using AddNewConnectSession() 
+     * or AddNewDormantConnectSession().
+     * @param delay The new maximum connect time to allow, in microseconds, or MUSCLE_TIME_NEVER to not
+     *              enforce any particular maximum connect time.
+     */
+   void SetMaxAsyncConnectPeriod(uint64 delay) {_maxAsyncConnectPeriod = delay; InvalidatePulseTime();}
+
+   /** Returns the current maximum-asynchronous-connect setting, in microseconds.
+     * Note that this setting is only relevant for sessions that were attached using AddNewConnectSession() 
+     * or AddNewDormantConnectSession().
+     */
+   uint64 GetMaxAsyncConnectPeriod() const {return _maxAsyncConnectPeriod;}
+
    /** Returns true iff we are currently in the middle of an asynchronous TCP connection */
    bool IsConnectingAsync() const {return _connectingAsync;}
 
@@ -346,7 +388,22 @@ public:
      */
    bool WasConnected() const {return _wasConnected;}
 
-protected:
+   /** This method may be called by ReflectServer when the server process runs low on memory.  
+     * If it returns true this session may be disposed of in order to free up memory.  If it 
+     * returns false, this session will not be disposed of.
+     *
+     * Default return value is false, but the ReflectServer class will call SetExpendable(true)
+     * on any sessions return by ReflectSessionFactory::CreateSession() method, or
+     * passed to AddNewConnectSession(), unless SetExpendable() had already been explicitly
+     * called on the session beforehand.
+     */
+   bool IsExpendable() const {return _isExpendable;}
+
+   /** Calls this to set or clear the isExpendable flag on a session (see IsExpendable() for details) 
+     * @param isExpendable If true, this session may be removed in a low-on-memory situation.  If false, it won't be.
+     */
+   void SetExpendable(bool isExpendable) {_isExpendable = isExpendable;}
+
    /**
     * Adds a MessageRef to our gateway's outgoing message queue.
     * (ref) will be sent back to our client when time permits.
@@ -367,12 +424,29 @@ protected:
    void BroadcastToAllSessions(const MessageRef & msgRef, void * userData = NULL, bool includeSelf = true);
 
    /**
+    * Convenience method:  Calls MessageReceivedFromFactory() on all session
+    * objects of the specified type.  Saves you from having to do your own iteration every time you
+    * want to broadcast something.
+    * @param msgRef a reference to the Message you wish to broadcast
+    * @param userData any userData value you care to include.  Defaults to NULL.
+    * @param includeSelf Whether or not MessageReceivedFromSession() should be called on 'this' session.  Defaults to true.
+    */
+   template <class SessionType> void BroadcastToAllSessionsOfType(const MessageRef & msgRef, void * userData = NULL, bool includeSelf=true)
+   {
+      for (HashtableIterator<const String *, AbstractReflectSessionRef> iter(GetSessions()); iter.HasData(); iter++)
+      {
+         SessionType * session = dynamic_cast<SessionType *>(iter.GetValue()());
+         if ((session)&&((includeSelf)||(session != this))) session->MessageReceivedFromSession(*this, msgRef, userData);
+      }
+   }
+
+   /**
     * Convenience method:  Calls MessageReceivedFromSession() on all installed
     * session-factory objects.  Saves you from having to do your own iteration
     * every time you want to broadcast something to the factories.
     * @param msgRef a reference to the Message you wish to broadcast
     * @param userData any userData value you care to include.  Defaults to NULL.
-    * @see GetFactories(), PutFactory(), GetFactory()
+    * @see GetFactories(), PutAcceptFactory(), GetFactory()
     */
    void BroadcastToAllFactories(const MessageRef & msgRef, void * userData = NULL);
 
@@ -391,26 +465,38 @@ protected:
     */
    status_t Reconnect();
 
-   /** Convenience method:  Returns the file descriptor associated with this session's
+   /** Convenience method:  Returns the "read" file descriptor associated with this session's
      * DataIO class, or a NULL reference if there is none.
      */
-   const ConstSocketRef & GetSessionSelectSocket() const;
+   const ConstSocketRef & GetSessionReadSelectSocket() const;
 
+   /** Convenience method:  Returns the "write" file descriptor associated with this session's
+     * DataIO class, or a NULL reference if there is none.
+     */
+   const ConstSocketRef & GetSessionWriteSelectSocket() const;
+
+protected:
    /** Set by StorageReflectSession::AttachedToServer() */
    void SetSessionRootPath(const String & p) {_sessionRootPath = p;}
 
 private:
    void SetPolicyAux(AbstractSessionIOPolicyRef & setRef, uint32 & setChunk, const AbstractSessionIOPolicyRef & newRef, bool isInput);
    void PlanForReconnect();
+   void SetConnectingAsync(bool isConnectingAsync);
 
    friend class ReflectServer;
    uint32 _sessionID;
    String _idString;
    IPAddressAndPort _ipAddressAndPort;
+
    bool _connectingAsync;
    bool _isConnected;
+   uint64 _maxAsyncConnectPeriod;    // max number of microseconds to allow an async-connect to take before timing out (or MUSCLE_TIME_NEVER if no limit is enforced)
+   uint64 _asyncConnectTimeoutTime;  // timestamp of when to force an async-connect-in-progress to timeout
+
    String _hostName;
    IPAddressAndPort _asyncConnectDest;
+   bool _reconnectViaTCP;  // only valid when _asyncConnectDest is set
    AbstractMessageIOGatewayRef _gateway;
    uint64 _lastByteOutputAt;
    AbstractSessionIOPolicyRef _inputPolicyRef;
@@ -418,19 +504,16 @@ private:
    uint32 _maxInputChunk;   // as determined by our Policy object
    uint32 _maxOutputChunk;  // and stored here for convenience
    uint64 _outputStallLimit;
-   bool _scratchReconnected; // scratch, watched by ReflectServer() during ClientConnectionClosed() calls.
+   bool _scratchReconnected; // scratch, watched by ReflectServer during ClientConnectionClosed() calls.
    String _sessionRootPath;
 
    // auto-reconnect support
    uint64 _autoReconnectDelay;
    uint64 _reconnectTime;
    bool _wasConnected;
-};
 
-// VC++ (previous to .net) can't handle partial template specialization, so for them we define this explicitly.
-#ifdef MUSCLE_USING_OLD_MICROSOFT_COMPILER
-DECLARE_HASHTABLE_KEY_CLASS(Ref<AbstractReflectSession>);
-#endif
+   TamperEvidentValue<bool> _isExpendable;
+};
 
 }; // end namespace muscle
 

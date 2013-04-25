@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #if defined(_WIN32) || defined(WIN32)
 # include <errno.h>
@@ -147,9 +147,9 @@ status_t Directory :: SetDir(const char * dirPath)
    Reset();
    if (dirPath)
    {
-      int pathLen = strlen(dirPath);
+      int pathLen = (int) strlen(dirPath);
       const char * sep = GetFilePathSeparator();
-      int sepLen = strlen(sep);
+      int sepLen = (int) strlen(sep);
       int extraBytes = ((pathLen<sepLen)||(strcmp(dirPath+pathLen-sepLen, sep) != 0)) ? sepLen : 0;
       _path = newnothrow_array(char, pathLen+extraBytes+1);
       if (_path == NULL) {WARN_OUT_OF_MEMORY; return B_ERROR;}
@@ -169,7 +169,7 @@ status_t Directory :: SetDir(const char * dirPath)
    else return B_NO_ERROR;
 }
 
-status_t Directory :: MakeDirectory(const char * dirPath, bool forceCreateParentDirsIfNecessary)
+status_t Directory :: MakeDirectory(const char * dirPath, bool forceCreateParentDirsIfNecessary, bool errorIfAlreadyExists)
 {
    if (forceCreateParentDirsIfNecessary)
    {
@@ -177,7 +177,7 @@ status_t Directory :: MakeDirectory(const char * dirPath, bool forceCreateParent
       const char * lastSlash = strrchr(dirPath+((dirPath[0]==sep)?1:0), sep);
       if (lastSlash)
       {
-         uint32 subLen = lastSlash-dirPath;
+         uint32 subLen = (uint32)(lastSlash-dirPath);
          char * temp = newnothrow_array(char, subLen+1);
          if (temp == NULL) {WARN_OUT_OF_MEMORY; return B_ERROR;}
 
@@ -185,7 +185,7 @@ status_t Directory :: MakeDirectory(const char * dirPath, bool forceCreateParent
          temp[subLen] = '\0';
 
          Directory pd(temp);
-         if ((pd.IsValid() == false)&&(Directory::MakeDirectory(temp, forceCreateParentDirsIfNecessary) != B_NO_ERROR))
+         if ((pd.IsValid() == false)&&(Directory::MakeDirectory(temp, true, false) != B_NO_ERROR))
          {
             delete [] temp;
             return B_ERROR;
@@ -196,15 +196,15 @@ status_t Directory :: MakeDirectory(const char * dirPath, bool forceCreateParent
 
    // base case!
 #ifdef WIN32
-   return CreateDirectoryA(dirPath, NULL) ? B_NO_ERROR : B_ERROR;
+   return ((CreateDirectoryA(dirPath, NULL))||((errorIfAlreadyExists==false)&&(GetLastError()==ERROR_ALREADY_EXISTS))) ? B_NO_ERROR : B_ERROR;
 #else
-   return (mkdir(dirPath, S_IRWXU|S_IRWXG|S_IRWXO) == 0) ? B_NO_ERROR : B_ERROR;
+   return ((mkdir(dirPath, S_IRWXU|S_IRWXG|S_IRWXO) == 0)||((errorIfAlreadyExists==false)&&(errno==EEXIST))) ? B_NO_ERROR : B_ERROR;
 #endif
 }
 
 status_t Directory :: MakeDirectoryForFile(const char * filePath)
 {
-   int pathLen = strlen(filePath);
+   int pathLen = (int) strlen(filePath);
    char * p = newnothrow_array(char,pathLen+1);
    if (p == NULL) {WARN_OUT_OF_MEMORY; return B_ERROR;}
 
@@ -224,8 +224,8 @@ status_t Directory :: DeleteDirectory(const char * dirPath, bool forceDeleteSubI
       if (d.SetDir(dirPath) != B_NO_ERROR) return B_ERROR;
 
       const char * sep = GetFilePathSeparator();
-      int sepLen       = strlen(sep);
-      int dirPathLen   = strlen(dirPath);
+      int sepLen       = (int) strlen(sep);
+      int dirPathLen   = (int) strlen(dirPath);
 
       // No point in including a separator if (dirPath) already ends in one
       if ((dirPathLen >= sepLen)&&(strcmp(&dirPath[dirPathLen-sepLen], sep) == 0)) {sep = ""; sepLen=0;}
@@ -234,7 +234,7 @@ status_t Directory :: DeleteDirectory(const char * dirPath, bool forceDeleteSubI
       {
          if ((strcmp(fn, ".") != 0)&&(strcmp(fn, "..") != 0))
          {
-            int fnLen = strlen(fn);
+            int fnLen = (int) strlen(fn);
             char * catStr = newnothrow_array(char, dirPathLen+sepLen+fnLen+1);
             if (catStr == NULL) {WARN_OUT_OF_MEMORY; return B_ERROR;}
 

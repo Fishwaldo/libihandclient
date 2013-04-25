@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
 
 #include "dataio/ByteBufferDataIO.h"
 #include "iogateway/AbstractMessageIOGateway.h"
@@ -21,14 +21,15 @@ namespace muscle {
   * If a message fragment is lost over the I/O channel, this class will simply drop the entire message
   * and continue.
   */
-class PacketTunnelIOGateway : public AbstractMessageIOGateway, private AbstractGatewayMessageReceiver
+class PacketTunnelIOGateway : public AbstractMessageIOGateway, private CountedObject<PacketTunnelIOGateway>
 {
 public:
    /** @param slaveGateway This is the gateway we will call to generate data to send, etc.
      *                     If you leave this argument unset (or pass in a NULL reference),
      *                     a general-purpose default algorithm will be used.
      * @param maxTransferUnit The largest packet size this I/O gateway will be allowed to send.
-     *                        Default to 1500 (i.e. the MTU for Ethernet hardware).  If the number
+     *                        Default value is MUSCLE_MAX_PAYLOAD_BYTES_PER_UDP_ETHERNET_PACKET (aka
+     *                        1404 if MUSCLE_AVOID_IPV6 is defined, 1388 otherwise).  If the number
      *                        passed in here is less than (FRAGMENT_HEADER_SIZE+1), it will be
      *                        intepreted as (FRAGMENT_HEADER_SIZE+1).  (aka 21 bytes)
      * @param magic The "magic number" that is expected to be at the beginning of each packet
@@ -36,7 +37,7 @@ public:
      *              are doing several separate instances of this class with different protocols,
      *              and you want to make sure they don't interfere with each other.
      */
-   PacketTunnelIOGateway(const AbstractMessageIOGatewayRef & slaveGateway = AbstractMessageIOGatewayRef(), uint32 maxTransferUnit = 1500, uint32 magic = DEFAULT_TUNNEL_IOGATEWAY_MAGIC);
+   PacketTunnelIOGateway(const AbstractMessageIOGatewayRef & slaveGateway = AbstractMessageIOGatewayRef(), uint32 maxTransferUnit = MUSCLE_MAX_PAYLOAD_BYTES_PER_UDP_ETHERNET_PACKET, uint32 magic = DEFAULT_TUNNEL_IOGATEWAY_MAGIC);
 
    virtual bool HasBytesToOutput() const {return ((_currentOutputBuffer())||(GetOutgoingMessageQueue().HasItems()));}
 
@@ -92,7 +93,7 @@ private:
    void HandleIncomingMessage(AbstractGatewayMessageReceiver & receiver, const ByteBufferRef & buf, const IPAddressAndPort & fromIAP);
 
    const uint32 _magic;                 // our magic number, used to sanity check packets
-   const uint32 _maxTransferUnit;       // max number of bytes to try to fit in a packet (e.g. 1500 for Ethernet?)
+   const uint32 _maxTransferUnit;       // max number of bytes to try to fit in a packet
 
    bool _allowMiscData;  // If true, we'll pass on non-magic UDP packets also, as if they were fragments
    uint32 _sexID;

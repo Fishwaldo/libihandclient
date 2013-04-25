@@ -1,5 +1,5 @@
 noinst_LTLIBRARIES = libmusclemessage.la
-libmusclemessage_la_SOURCES = message/Message.cpp util/ByteBuffer.cpp util/String.cpp syslog/SysLog.cpp system/SetupSystem.cpp iogateway/MessageIOGateway.cpp iogateway/AbstractMessageIOGateway.cpp util/PulseNode.cpp util/NetworkUtilityFunctions.cpp
+libmusclemessage_la_SOURCES = message/Message.cpp util/ByteBuffer.cpp util/String.cpp syslog/SysLog.cpp system/SetupSystem.cpp iogateway/MessageIOGateway.cpp iogateway/AbstractMessageIOGateway.cpp util/PulseNode.cpp util/NetworkUtilityFunctions.cpp util/SocketMultiplexer.cpp util/Directory.cpp util/FilePathInfo.cpp
 libmusclemessage_la_CXXFLAGS = -DMUSCLE_SINGLE_THREAD_ONLY
 
 noinst_HEADERS = util/ByteBuffer.h util/Queue.h message/Message.h util/FlatCountable.h \

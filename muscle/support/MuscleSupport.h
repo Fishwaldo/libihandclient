@@ -1,25 +1,50 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 /******************************************************************************
 /
 /     File:     MuscleSupport.h
 /
 /     Description:  Standard types, macros, functions, etc, for MUSCLE.
-/                   Many of them are suspiciously BeOS-like.  ;^)
 /
 *******************************************************************************/
 
 #ifndef MuscleSupport_h
 #define MuscleSupport_h
 
-#define MUSCLE_VERSION_STRING "4.63"
+#define MUSCLE_VERSION_STRING "5.84"
+#define MUSCLE_VERSION        58400  // Format is decimal Mmmbb, where (M) is the number before the decimal point, (mm) is the number after the decimal point, and (bb) is reserved
+
+/*! \mainpage MUSCLE Documentation Page
+ *
+ * The MUSCLE API provides a robust, somewhat scalable, cross-platform client-server solution for 
+ * network-distributed applications for Linux, MacOS/X, BSD, Windows, BeOS, AtheOS, and other operating 
+ * systems.  It allows (n) client programs (each of which may be running on a separate computer and/or 
+ * under a different OS) to communicate with each other in a many-to-many message-passing style.  It 
+ * employs a central server to which client programs may connect or disconnect at any time  (This design 
+ * is similar to other client-server systems such as Quake servers, IRC servers, and Napster servers, 
+ * but more general in application).  In addition to the client-server system, MUSCLE contains classes 
+ * to support peer-to-peer message streaming connections, as well as some handy miscellaneous utility 
+ * classes, all of which are documented here.
+ *
+ * All classes documented here should compile under most modern OS's with a modern C++ compiler.
+ * Where platform-specific code is necessary, it has been provided (inside \#ifdef's) for various OS's.
+ * Templates are used throughout; exceptions are not.  The code is usable in multithreaded environments,
+ * as long as you are careful.
+ *
+ * As distributed, the server side of the software is ready to compile and run, but to do much with it 
+ * you'll want to write your own client software.  Example client software can be found in the "test" 
+ * subdirectory.
+ */
 
 #include <string.h>  /* for memcpy() */
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>   /* for errno */
 
 /* Define this if the default FD_SETSIZE is too small for you (i.e. under Windows it's only 64) */
 #if defined(MUSCLE_FD_SETSIZE)
 # if defined(FD_SETSIZE)
-#  error "MuscleSupport.h:  Can't redefine FD_SETSIZE, someone else has already defined it!  You need to include MuscleSupport.h before including any other header files that define FD_SETSIZE."
+#  error "MuscleSupport.h:  Can not redefine FD_SETSIZE, someone else has already defined it!  You need to include MuscleSupport.h before including any other header files that define FD_SETSIZE."
 # else
 #  define FD_SETSIZE MUSCLE_FD_SETSIZE
 # endif
@@ -28,24 +53,26 @@
 /* If we are in an environment where known assembly is available, make a note of that fact */
 #ifndef MUSCLE_AVOID_INLINE_ASSEMBLY
 # if defined(__GNUC__)
-#  if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__amd64__) || defined(__x86_64__) || defined(__x86__) || defined(__pentium__) || defined(__pentiumpro__) || defined(__k6__)
+#  if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__amd64__) || defined(__x86_64__) || defined(__x86__) || defined(__pentium__) || defined(__pentiumpro__) || defined(__k6__) || defined(_M_AMD64)
 #   define MUSCLE_USE_X86_INLINE_ASSEMBLY 1
 #  elif defined(__PPC__) || defined(__POWERPC__)
 #   define MUSCLE_USE_POWERPC_INLINE_ASSEMBLY 1
 #  endif
-# endif
-# if defined(_MSC_VER) && defined(_X86_)
+# elif defined(_MSC_VER) && (defined(_X86_) || defined(_M_IX86))
 #  define MUSCLE_USE_X86_INLINE_ASSEMBLY 1
 # endif
 #endif
 
-#ifndef __cplusplus
-# define NEW_H_NOT_AVAILABLE
+#if (_MSC_VER >= 1310)
+# define MUSCLE_USE_MSVC_SWAP_FUNCTIONS 1
 #endif
 
-/* these CPUs can't handle non-aligned word reads, so we'll accomodate them by using memcpy() instead. */
-#if defined(MIPS) || defined(mc68000) || defined(sparc) || defined(__sparc) || defined(m68k) || defined(__68k__) || defined(__sparc__)
-# define MUSCLE_CPU_REQUIRES_DATA_ALIGNMENT
+#if (_MSC_VER >= 1300) && !defined(MUSCLE_AVOID_WINDOWS_STACKTRACE)
+# define MUSCLE_USE_MSVC_STACKWALKER 1
+#endif
+
+#ifndef __cplusplus
+# define NEW_H_NOT_AVAILABLE
 #endif
 
 /* Borland C++ builder also runs under Win32, but it doesn't set this flag So we'd better set it ourselves. */
@@ -73,7 +100,6 @@
 #ifndef NEW_H_NOT_AVAILABLE
 # include <new>
 # ifndef __MWERKS__
-;
 using std::bad_alloc;
 using std::nothrow_t;
 using std::nothrow;
@@ -102,12 +128,8 @@ using std::set_new_handler;
 #if defined(__BEOS__) || defined(__HAIKU__)
 # include <kernel/debugger.h>
 # define MCRASH_IMPL debugger("muscle assertion failure")
-#elif defined(WIN32)
-# if defined(UNICODE)
-#  define MCRASH_IMPL FatalAppExit(0, L"muscle assertion failure")
-# else
-#  define MCRASH_IMPL FatalAppExit(0, "muscle assertion failure")
-# endif
+#elif defined(__GNUC__)
+# define MCRASH_IMPL __builtin_trap()
 #else
 # define MCRASH_IMPL *((uint32*)NULL) = 0x666
 #endif
@@ -137,12 +159,14 @@ using std::set_new_handler;
 
 #define MCRASH(msg) {muscle::LogTime(muscle::MUSCLE_LOG_CRITICALERROR, "ASSERTION FAILED: (%s:%i) %s\n", __FILE__,__LINE__,msg); muscle::LogStackTrace(MUSCLE_LOG_CRITICALERROR); MCRASH_IMPL;}
 #define MEXIT(retVal,msg) {muscle::LogTime(muscle::MUSCLE_LOG_CRITICALERROR, "ASSERTION FAILED: (%s:%i) %s\n", __FILE__,__LINE__,msg); muscle::LogStackTrace(MUSCLE_LOG_CRITICALERROR); ExitWithoutCleanup(retVal);}
-#define WARN_OUT_OF_MEMORY muscle::LogTime(muscle::MUSCLE_LOG_CRITICALERROR, "ERROR--OUT OF MEMORY!  (%s:%i)\n",__FILE__,__LINE__)
+#define WARN_OUT_OF_MEMORY muscle::WarnOutOfMemory(__FILE__, __LINE__)
 #define MCHECKPOINT muscle::LogTime(muscle::MUSCLE_LOG_WARNING, "Reached checkpoint at %s:%i\n", __FILE__, __LINE__)
 
-#define UNLESS(x) if(!(x))
-#define ARRAYITEMS(x) (sizeof(x)/sizeof(x[0]))  /* returns # of items in array */
-
+#ifdef __cplusplus
+template<typename T, int size> unsigned int ARRAYITEMS(T(&)[size]) {return size;}  /* returns # of items in array, will error out at compile time if you try it on a pointer */
+#else
+# define ARRAYITEMS(x) (sizeof(x)/sizeof(x[0]))  /* returns # of items in array */
+#endif
 typedef void * muscleVoidPointer;  /* it's a bit easier, syntax-wise, to use this type than (void *) directly in some cases. */
 
 #if defined(__BEOS__) || defined(__HAIKU__)
@@ -171,7 +195,7 @@ typedef void * muscleVoidPointer;  /* it's a bit easier, syntax-wise, to use thi
     typedef unsigned char           uint8;
     typedef short                   int16;
     typedef unsigned short          uint16;
-#   if defined(MUSCLE_64_BIT_PLATFORM) || defined(__osf__) || defined(__amd64__) || defined(__PPC64__) || defined(__x86_64__)   /* some 64bit systems will have long=64-bit, int=32-bit */
+#   if defined(MUSCLE_64_BIT_PLATFORM) || defined(__osf__) || defined(__amd64__) || defined(__PPC64__) || defined(__x86_64__) || defined(_M_AMD64)   /* some 64bit systems will have long=64-bit, int=32-bit */
 #    ifndef MUSCLE_64_BIT_PLATFORM
 #     define MUSCLE_64_BIT_PLATFORM 1  // auto-define it if it wasn't defined in the Makefile
 #    endif
@@ -197,8 +221,8 @@ typedef void * muscleVoidPointer;  /* it's a bit easier, syntax-wise, to use thi
       typedef unsigned long long     uint64;  // 32-bit and 64-bit flavors.  C'est la vie, non?
 #    endif
 #   elif defined(MUSCLE_64_BIT_PLATFORM)
-     typedef long long              int64;
-     typedef unsigned long long     uint64;
+     typedef long                   int64;
+     typedef unsigned long          uint64;
 #   else
      typedef long long              int64;
      typedef unsigned long long     uint64;
@@ -211,36 +235,43 @@ typedef void * muscleVoidPointer;  /* it's a bit easier, syntax-wise, to use thi
 /** Ugly platform-neutral macros for problematic sprintf()-format-strings */
 #if defined(MUSCLE_64_BIT_PLATFORM)
 # define  INT32_FORMAT_SPEC_NOPERCENT "i"
-# define XINT32_FORMAT_SPEC_NOPERCENT "x"
 # define UINT32_FORMAT_SPEC_NOPERCENT "u"
+# define XINT32_FORMAT_SPEC_NOPERCENT "x"
 # ifdef __APPLE__
 #  define  INT64_FORMAT_SPEC_NOPERCENT "lli"
 #  define UINT64_FORMAT_SPEC_NOPERCENT "llu"
+#  define XINT64_FORMAT_SPEC_NOPERCENT "llx"
 # else
 #  define  INT64_FORMAT_SPEC_NOPERCENT "li"
 #  define UINT64_FORMAT_SPEC_NOPERCENT "lu"
+#  define XINT64_FORMAT_SPEC_NOPERCENT "lx"
 # endif
 #else
 # define  INT32_FORMAT_SPEC_NOPERCENT "li"
-# define XINT32_FORMAT_SPEC_NOPERCENT "lx"
 # define UINT32_FORMAT_SPEC_NOPERCENT "lu"
+# define XINT32_FORMAT_SPEC_NOPERCENT "lx"
 # if defined(_MSC_VER)
 #  define  INT64_FORMAT_SPEC_NOPERCENT "I64i"
 #  define UINT64_FORMAT_SPEC_NOPERCENT "I64u"
+#  define XINT64_FORMAT_SPEC_NOPERCENT "I64x"
 # elif (defined(__BEOS__) && !defined(__HAIKU__)) || defined(__MWERKS__) || defined(__BORLANDC__)
 #  define  INT64_FORMAT_SPEC_NOPERCENT "Li"
 #  define UINT64_FORMAT_SPEC_NOPERCENT "Lu"
+#  define XINT64_FORMAT_SPEC_NOPERCENT "Lx"
 # else
 #  define  INT64_FORMAT_SPEC_NOPERCENT "lli"
 #  define UINT64_FORMAT_SPEC_NOPERCENT "llu"
+#  define XINT64_FORMAT_SPEC_NOPERCENT "llx"
 # endif
 #endif
 
-# define  INT32_FORMAT_SPEC "%" INT32_FORMAT_SPEC_NOPERCENT
-# define XINT32_FORMAT_SPEC "%" XINT32_FORMAT_SPEC_NOPERCENT
+# define  INT32_FORMAT_SPEC "%"  INT32_FORMAT_SPEC_NOPERCENT
 # define UINT32_FORMAT_SPEC "%" UINT32_FORMAT_SPEC_NOPERCENT
-# define  INT64_FORMAT_SPEC "%" INT64_FORMAT_SPEC_NOPERCENT
+# define XINT32_FORMAT_SPEC "%" XINT32_FORMAT_SPEC_NOPERCENT
+
+# define  INT64_FORMAT_SPEC "%"  INT64_FORMAT_SPEC_NOPERCENT
 # define UINT64_FORMAT_SPEC "%" UINT64_FORMAT_SPEC_NOPERCENT
+# define XINT64_FORMAT_SPEC "%" XINT64_FORMAT_SPEC_NOPERCENT
 
 #define MAKETYPE(x) ((((unsigned long)(x[0])) << 24) | \
                      (((unsigned long)(x[1])) << 16) | \
@@ -295,31 +326,14 @@ template<typename T> inline T muscleSwapBytes(T swapMe)
    return u2._iWide;
 }
 
-/* This template safely copies a value in from an untyped byte buffer to a typed value.
- * (Make sure MUSCLE_CPU_REQUIRES_DATA_ALIGNMENT is defined if you are on a CPU
- * that doesn't like non-word-aligned data reads and writes)
- */
-template<typename T> inline void muscleCopyIn(T & dest, const void * source)
-{
-#ifdef MUSCLE_CPU_REQUIRES_DATA_ALIGNMENT
-   memcpy(&dest, source, sizeof(dest));
-#else
-   dest = *((const T*)source);
-#endif
-}
+/* This template safely copies a value in from an untyped byte buffer to a typed value, and returns the typed value.  */
+template<typename T> inline T muscleCopyIn(const void * source) {T dest; memcpy(&dest, source, sizeof(dest)); return dest;}
 
-/** This template safely copies a value in from a typed value to an untyped byte buffer.
-  * (Make sure MUSCLE_CPU_REQUIRES_DATA_ALIGNMENT is defined if you are on a CPU
-  *  that doesn't like non-word-aligned data reads and writes)
-  */
-template<typename T> inline void muscleCopyOut(void * dest, const T & source)
-{
-#ifdef MUSCLE_CPU_REQUIRES_DATA_ALIGNMENT
-   memcpy(dest, &source, sizeof(source));
-#else
-   *((T*)dest) = source;
-#endif
-}
+/* This template safely copies a value in from an untyped byte buffer to a typed value.  */
+template<typename T> inline void muscleCopyIn(T & dest, const void * source) {memcpy(&dest, source, sizeof(dest));}
+
+/** This template safely copies a value in from a typed value to an untyped byte buffer.  */
+template<typename T> inline void muscleCopyOut(void * dest, const T & source) {memcpy(dest, &source, sizeof(source));}
 
 /** This macro should be used instead of "newnothrow T[count]".  It works the
   * same, except that it hacks around an ugly bug in gcc 3.x where newnothrow
@@ -335,6 +349,37 @@ template <typename T> inline T * broken_gcc_newnothrow_array(size_t count)
 # define newnothrow_array(T, count) broken_gcc_newnothrow_array<T>(count)
 #else
 # define newnothrow_array(T, count) newnothrow T[count]
+#endif
+
+/** This function returns a reference to a read-only, default-constructed
+  * static object of type T.  There will be exactly one of these objects
+  * present per instantiated type, per process.
+  */
+template <typename T> const T & GetDefaultObjectForType()
+{
+   static T _defaultObject;
+   return _defaultObject;
+}
+
+/** This function returns a reference to a read/write, default-constructed
+  * static object of type T.  There will be exactly one of these objects
+  * present per instantiated type, per process.
+  *
+  * Note that this object is different from the one returned by
+  * GetDefaultObjectForType(); the difference (other than there being
+  * possibly two separate objects) is that this one can be written to,
+  * whereas GetDefaultObjectForType()'s object must always be in its default state.
+  */
+template <typename T> T & GetGlobalObjectForType()
+{
+   static T _defaultObject;
+   return _defaultObject;
+}
+
+#if __GNUC__ >= 4
+# define MUSCLE_MAY_ALIAS __attribute__((__may_alias__))
+#else
+# define MUSCLE_MAY_ALIAS
 #endif
 
 /** Returns the smallest of the two arguments */
@@ -371,7 +416,7 @@ template<typename T> inline const T & muscleClamp(const T & v, const T & lo, con
 template<typename T> inline bool muscleInRange(const T & v, const T & lo, const T & hi) {return ((v >= lo)&&(v <= hi));}
 
 /** Returns -1 if arg1 is larger, or 1 if arg2 is larger, or 0 if they are equal. */
-template<typename T> inline int muscleCompare(const T & arg1, const T & arg2) {return (arg1>arg2) ? 1 : ((arg1<arg2) ? -1 : 0);}
+template<typename T> inline int muscleCompare(const T & arg1, const T & arg2) {return (arg2<arg1) ? 1 : ((arg1<arg2) ? -1 : 0);}
 
 /** Returns the absolute value of (arg) */
 template<typename T> inline T muscleAbs(const T & arg) {return (arg<0)?(-arg):arg;}
@@ -439,7 +484,7 @@ template<typename T> inline int muscleSgn(const T & arg) {return (arg<0)?-1:((ar
               defined(__i386) || defined(__ia64) || \
               defined(MIPSEL) || defined(_MIPSEL) || defined(BIT_ZERO_ON_RIGHT) || \
               defined(__alpha__) || defined(__alpha) || defined(__CYGWIN__) || \
-              defined(_M_IX86) || defined(__GNUWIN32__) || defined(__LITTLEENDIAN__) || \
+              defined(_M_IX86) || defined(_M_AMD64) || defined(__GNUWIN32__) || defined(__LITTLEENDIAN__) || \
               (defined(__Lynx__) && defined(__x86__))
         #define BYTE_ORDER      LITTLE_ENDIAN
       #endif
@@ -535,6 +580,10 @@ static inline uint64 MusclePowerPCSwapInt64(uint64 val)
 #  define B_SWAP_INT64(arg)    MusclePowerPCSwapInt64((uint64)(arg))
 #  define B_SWAP_INT32(arg)    MusclePowerPCSwapInt32((uint32)(arg))
 #  define B_SWAP_INT16(arg)    MusclePowerPCSwapInt16((uint16)(arg))
+# elif defined(MUSCLE_USE_MSVC_SWAP_FUNCTIONS)
+#  define B_SWAP_INT64(arg)    _byteswap_uint64((uint64)(arg))
+#  define B_SWAP_INT32(arg)    _byteswap_ulong((uint32)(arg))
+#  define B_SWAP_INT16(arg)    _byteswap_ushort((uint16)(arg))
 # elif defined(MUSCLE_USE_X86_INLINE_ASSEMBLY)
 static inline uint16 MuscleX86SwapInt16(uint16 val)
 {
@@ -544,8 +593,10 @@ static inline uint16 MuscleX86SwapInt16(uint16 val)
       xchg al, ah;
       mov val, ax;
    };
+#elif defined(MUSCLE_64_BIT_PLATFORM)
+   __asm__ ("xchgb %h0, %b0" : "+Q" (val));
 #else
-   __asm__ ("xchgb %b0,%h0" : "=q" (val) : "0" (val));
+   __asm__ ("xchgb %h0, %b0" : "+q" (val));
 #endif
    return val;
 }
@@ -696,12 +747,21 @@ static inline void MakePrettyTypeCodeString(uint32 typecode, char *buf)
    for (i=0; i<sizeof(bigEndian); i++) if ((buf[i]<' ')||(buf[i]>'~')) buf[i] = '?';
 }
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>     /* for errno */
-
 #ifdef WIN32
 # include <winsock2.h>  // this will bring in windows.h for us
+#endif
+
+#ifdef _MSC_VER
+typedef UINT_PTR uintptr;   // Use these under MSVC so that the compiler
+typedef INT_PTR  ptrdiff;   // doesn't give spurious warnings in /Wp64 mode
+#else
+# if defined(MUSCLE_64_BIT_PLATFORM)
+typedef uint64 uintptr;
+typedef int64 ptrdiff;
+# else
+typedef uint32 uintptr;
+typedef int32 ptrdiff;
+# endif
 #endif
 
 #ifdef __cplusplus
@@ -751,22 +811,6 @@ static inline int32 ConvertReturnValueToMuscleSemantics(int origRet, uint32 maxS
 
 #ifdef __cplusplus
 namespace muscle {
-#endif
-
-#ifdef __cplusplus
-/** These compare functions are useful for passing into Hashtables or Queues to keep them sorted */
-int IntCompareFunc  ( const int    & i1, const int    & i2, void *);
-int Int8CompareFunc ( const int8   & i1, const int8   & i2, void *);
-int Int16CompareFunc( const int16  & i1, const int16  & i2, void *);
-int Int32CompareFunc( const int32  & i1, const int32  & i2, void *);
-int Int64CompareFunc( const int64  & i1, const int64  & i2, void *);
-int UIntCompareFunc  (const unsigned int & i1, const unsigned int & i2, void *);
-int UInt8CompareFunc (const uint8  & i1, const uint8  & i2, void *);
-int UInt16CompareFunc(const uint16 & i1, const uint16 & i2, void *);
-int UInt32CompareFunc(const uint32 & i1, const uint32 & i2, void *);
-int UInt64CompareFunc(const uint64 & i1, const uint64 & i2, void *);
-int FloatCompareFunc( const float  & i1, const float  & i2, void *);
-int DoubleCompareFunc(const double & i1, const double & i2, void *);
 #endif
 
 #if MUSCLE_TRACE_CHECKPOINTS > 0
@@ -825,40 +869,211 @@ static inline void StoreTraceValue(uint32 v) {(void) v;}  /* named param is nece
 #define TCHECKPOINT {/* empty */}
 #endif
 
+#ifdef __cplusplus
+
+/** This templated class is used as a "comparison callback" for sorting items in a Queue or Hashtable.
+  * For many types, this default CompareFunctor template will do the job, but you also have the option of specifying
+  * a different custom CompareFunctor for times when you want to sort in ways other than simply using the
+  * less than and equals operators of the ItemType type.
+  */
+template <typename ItemType> class CompareFunctor
+{
+public:
+   /**
+    *  This is the signature of the type of callback function that you must pass
+    *  into the Sort() method.  This function should work like strcmp(), returning
+    *  a negative value if (item1) is less than item2, or zero if the items are
+    *  equal, or a positive value if (item1) is greater than item2.
+    *  The default implementation simply calls the muscleCompare() function.
+    *  @param item1 The first item
+    *  @param item2 The second item
+    *  @param cookie A user-defined value that was passed in to the Sort() method.
+    *  @return A value indicating which item is "larger", as defined above.
+    */
+   int Compare(const ItemType & item1, const ItemType & item2, void * /*cookie*/) const {return muscleCompare(item1, item2);}
+};
+
+/** Same as above, but used for pointers instead of direct items */
+template <typename ItemType> class CompareFunctor<ItemType *>
+{
+public:
+   int Compare(const ItemType * item1, const ItemType * item2, void * cookie) const {return CompareFunctor<ItemType>().Compare(*item1, *item2, cookie);}
+};
+
+/** For void pointers, we just compare the pointer values, since they can't be de-referenced. */
+template<> class CompareFunctor<void *>
+{
+public:
+   int Compare(void * s1, void * s2, void * /*cookie*/) const {return muscleCompare(s1, s2);}
+};
+
+/** We assume that (const char *)'s should always be compared using strcmp(). */
+template<> class CompareFunctor<const char *>
+{
+public:
+   int Compare(const char * s1, const char * s2, void * /*cookie*/) const {return strcmp(s1, s2);}
+};
+
+/** We assume that (const char *)'s should always be compared using strcmp(). */
+template<> class CompareFunctor<char *>
+{
+public:
+   int Compare(char * s1, char * s2, void * /*cookie*/) const {return strcmp(s1, s2);}
+};
+
+/** For cases where you really do want to just use a pointer as the key, instead
+  * of cleverly trying to dereference the object it points to and sorting on that, you can specify this.
+  */
+template <typename PointerType> class PointerCompareFunctor
+{
+public:
+   int Compare(PointerType s1, PointerType s2, void * /*cookie*/) const {return muscleCompare(s1, s2);}
+};
+
+/** Hash function for arbitrary data.  Note that the current implementation of this function
+  * is MurmurHash2/Aligned, taken from http://murmurhash.googlepages.com/ and used as public domain code.
+  * Thanks to Austin Appleby for the cool algorithm!
+  * Note that these hash codes should not be passed outside of the
+  * host that generated them, as different host architectures may give
+  * different hash results for the same key data.
+  * @param key Pointer to the data to hash
+  * @param numBytes Number of bytes to hash start at (key)
+  * @param seed An arbitrary number that affects the output values.  Defaults to zero.
+  * @returns a 32-bit hash value corresponding to the hashed data.
+  */
+uint32 CalculateHashCode(const void * key, uint32 numBytes, uint32 seed = 0);
+
+/** Same as HashCode(), but this version produces a 64-bit result.
+  * This code is also part of MurmurHash2, written by Austin Appleby
+  * Note that these hash codes should not be passed outside of the
+  * host that generated them, as different host architectures may give
+  * different hash results for the same key data.
+  * @param key Pointer to the data to hash
+  * @param numBytes Number of bytes to hash start at (key)
+  * @param seed An arbitrary number that affects the output values.  Defaults to zero.
+  * @returns a 32-bit hash value corresponding to the hashed data.
+  */
+uint64 CalculateHashCode64(const void * key, unsigned int numBytes, unsigned int seed = 0);
+
+/** Convenience method; returns the hash code of the given data item.  Any POD type will do. 
+  * @param val The value to calculate a hashcode for
+  * @returns a hash code.
+  */
+template<typename T> inline uint32 CalculateHashCode(const T & val) {return CalculateHashCode(&val, sizeof(val));}
+
+/** Convenience method; returns the 64-bit hash code of the given data item.  Any POD type will do. 
+  * @param val The value to calculate a hashcode for
+  * @returns a hash code.
+  */
+template<typename T> inline uint64 CalculateHashCode64(const T & val) {return CalculateHashCode64(&val, sizeof(val));}
+
 /** This is a convenience function that will read through the passed-in byte
   * buffer and create a 32-bit checksum corresponding to its contents.
-  * @param buffer Pointer to the data to creata checksum for.
+  * Note:  As of MUSCLE 5.22, this function is merely a synonym for CalculateHashCode().
+  * @param buffer Pointer to the data to creat a checksum for.
   * @param numBytes Number of bytes that (buffer) points to.
   * @returns A 32-bit number based on the contents of the buffer.
   */
-uint32 CalculateChecksum(const uint8 * buffer, uint32 numBytes);
+static inline uint32 CalculateChecksum(const void * buffer, uint32 numBytes) {return CalculateHashCode(buffer, numBytes);}
 
 /** Convenience method:  Given a uint64, returns a corresponding 32-bit checksum value */
-static inline uint32 CalculateChecksumForUint64(uint64 v) {return ((uint32)(v&0xFFFFFFFF)) + ((uint32)((v>>32)&0xFFFFFFFF));}
+static inline uint32 CalculateChecksumForUint64(uint64 v) {uint64 le = B_HOST_TO_LENDIAN_INT64(v);   return CalculateChecksum(&le, sizeof(le));}
 
 /** Convenience method:  Given a float, returns a corresponding 32-bit checksum value */
-static inline uint32 CalculateChecksumForFloat(float v) {return B_HOST_TO_LENDIAN_IFLOAT(v);}
+static inline uint32 CalculateChecksumForFloat(float v)   {uint32 le = (v==0.0f) ? 0 : B_HOST_TO_LENDIAN_IFLOAT(v); return CalculateChecksum(&le, sizeof(le));}  // yes, the special case for 0.0f IS necessary, because the sign-bit might be set.  :(
 
 /** Convenience method:  Given a double, returns a corresponding 32-bit checksum value */
-static inline uint32 CalculateChecksumForDouble(double v) {return CalculateChecksumForUint64(B_HOST_TO_LENDIAN_IDOUBLE(v));}
+static inline uint32 CalculateChecksumForDouble(double v) {uint64 le = (v==0.0) ? 0 : B_HOST_TO_LENDIAN_IDOUBLE(v); return CalculateChecksum(&le, sizeof(le));}  // yes, the special case for 0.0 IS necessary, because the sign-bit might be set.  :(
 
-// This macro makes the given class (that is not in any namespace)
-// usable as a Hashtable key.  Note that the class must have a method:
-// uint32 HashCode() const that returns a hashcode for the object it is called on.
-// (Note:  the space after keyClass in second line of the the macro below is
-// necessary for MSVC to compile the macro properly!  Hmm....)
-#define DECLARE_HASHTABLE_KEY_CLASS(keyClass)                                   \
-   template <class T> class HashFunctor;                                        \
-   template <> class HashFunctor<keyClass >                                     \
-   {                                                                            \
-   public:                                                                      \
-      uint32 operator () (const keyClass & str) const {return str.HashCode();}  \
-   };                                                                           \
-   template <> class HashFunctor<const keyClass *>                              \
-   {                                                                            \
-   public:                                                                      \
-      uint32 operator () (const keyClass * str) const {return str->HashCode();} \
-   }
+/** This hashing functor type handles the trivial cases, where the KeyType is
+ *  Plain Old Data that we can just feed directly into the CalculateHashCode() function.
+ *  For more complicated key types, you should define a method in your KeyType class
+ *  that looks like this:
+ *      uint32 HashCode() const {return the_calculated_hash_code_for_this_object();}
+ *  And that will be enough for the template magic to kick in and use MethodHashFunctor
+ *  by default instead.  (See util/String.h for an example of this)
+ */
+template <class KeyType> class PODHashFunctor
+{
+public:
+   uint32 operator()(const KeyType & x) const {return CalculateHashCode(x);}
+   bool AreKeysEqual(const KeyType & k1, const KeyType & k2) const {return (k1==k2);}
+};
+
+/** This hashing functor type calls HashCode() on the supplied object to retrieve the hash code. */
+template <class KeyType> class MethodHashFunctor
+{
+public:
+   uint32 operator()(const KeyType & x) const {return x.HashCode();}
+   bool AreKeysEqual(const KeyType & k1, const KeyType & k2) const {return (k1==k2);}
+};
+
+/** This hashing functor type calls HashCode() on the supplied object to retrieve the hash code.  Used for pointers to key values. */
+template <typename KeyType> class MethodHashFunctor<KeyType *>
+{
+public:
+   uint32 operator()(const KeyType * x) const {return x->HashCode();}
+
+   /** Note that when pointers are used as hash keys, we determine equality by comparing the objects
+     * the pointers point to, NOT by just comparing the pointers themselves!
+     */
+   bool AreKeysEqual(const KeyType * k1, const KeyType * k2) const {return ((*k1)==(*k2));}
+};
+
+/** This macro can be used whenever you want to explicitly specify the default AutoChooseHashFunctorHelper functor for your type.  It's easier than remembering the tortured C++ syntax */
+#define DEFAULT_HASH_FUNCTOR(type) AutoChooseHashFunctorHelper<type>::Type
+
+namespace ugly_implementation_details
+{
+   // This code was from the example code at http://www.martinecker.com/wiki/index.php?title=Detecting_the_Existence_of_Member_Functions_at_Compile-Time
+   // It is used by the AutoChooseHashFunctorHelper (below) to automatically choose the appropriate HashFunctor
+   // type based on whether or not class given in the template argument has a "uint32 HashCode() const" method defined.
+
+   typedef char yes;
+   typedef char (&no)[2];
+   template <typename T, uint32 (T::*f)() const> struct test_hashcode_wrapper {};
+
+   // via SFINAE only one of these overloads will be considered
+   template <typename T> yes hashcode_tester(test_hashcode_wrapper<T, &T::HashCode>*);
+   template <typename T> no  hashcode_tester(...);
+
+   template <typename T> struct test_hashcode_impl {static const bool value = sizeof(hashcode_tester<T>(0)) == sizeof(yes);};
+
+   template <class T> struct has_hashcode_method : test_hashcode_impl<T> {};
+   template <bool Condition, typename TrueResult, typename FalseResult> struct if_;
+   template <typename TrueResult, typename FalseResult> struct if_<true,  TrueResult, FalseResult> {typedef TrueResult  result;};
+   template <typename TrueResult, typename FalseResult> struct if_<false, TrueResult, FalseResult> {typedef FalseResult result;};
+}
+
+template<typename ItemType> class AutoChooseHashFunctorHelper
+{
+public:
+   typedef typename ugly_implementation_details::if_<ugly_implementation_details::test_hashcode_impl<ItemType>::value, MethodHashFunctor<ItemType>, PODHashFunctor<ItemType> >::result Type;
+};
+template <typename ItemType> class AutoChooseHashFunctorHelper<ItemType *>
+{
+public:
+   typedef typename ugly_implementation_details::if_<ugly_implementation_details::test_hashcode_impl<ItemType>::value, MethodHashFunctor<ItemType *>, PODHashFunctor<ItemType *> >::result Type;
+};
+
+/** This HashFunctor lets us use (const char *)'s as keys in a Hashtable.  They will be
+  * hashed based on contents of the string they point to.
+  */
+template <> class PODHashFunctor<const char *>
+{
+public:
+   /** Returns a hash code for the given C string.
+     * @param str The C string to compute a hash code for.
+     */
+   uint32 operator () (const char * str) const {return CalculateHashCode(str, (uint32)strlen(str));}
+   bool AreKeysEqual(const char * k1, const char * k2) const {return (strcmp(k1,k2)==0);}
+};
+
+template <> class AutoChooseHashFunctorHelper<const void *> {typedef PODHashFunctor<const void *> Type;};
+template <> class AutoChooseHashFunctorHelper<char *>       {typedef PODHashFunctor<char *>       Type;};
+template <> class AutoChooseHashFunctorHelper<void *>       {typedef PODHashFunctor<void *>       Type;};
+
+#endif
 
 // VC++6 and earlier can't handle partial template specialization, so
 // they need some extra help at various places.  Lame....
@@ -870,14 +1085,11 @@ static inline uint32 CalculateChecksumForDouble(double v) {return CalculateCheck
 # endif
 #endif
 
-// This macro is the same as DECLARE_HASHTABLE_KEY_CLASS, except it
-// is meant to be used from within namespaces other than the muscle
-// namespace.  It makes sure the HashFunctors are declared inside the
-// muscle namespace, as C++ requires.
-#define DECLARE_HASHTABLE_KEY_CLASS_IN_NAMESPACE(nameSpace, keyClass)    \
-   };                                                                    \
-   namespace muscle {DECLARE_HASHTABLE_KEY_CLASS(nameSpace::keyClass);}; \
-   namespace nameSpace {
+/** Given an ASCII representation of a non-negative number, returns that number as a uint64. */
+uint64 Atoull(const char * str);
+
+/** Similar to Atoll(), but handles negative numbers as well */
+int64 Atoll(const char * str);
 
 #ifdef __cplusplus
 }; // end namespace muscle

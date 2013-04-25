@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
 
 #if defined(__linux__) || defined(__APPLE__)
 # define MUSCLE_USE_POSIX_SIGNALS 1
@@ -72,7 +72,7 @@ status_t SignalMultiplexer :: UpdateSignalSets()
       int sigNum;
       for (uint32 i=0; s->GetNthSignalNumber(i, sigNum) == B_NO_ERROR; i++) if ((newSignalSet.IndexOf(sigNum) < 0)&&(newSignalSet.AddTail(sigNum) != B_NO_ERROR)) return B_ERROR;
    }
-   newSignalSet.Sort(IntCompareFunc);
+   newSignalSet.Sort();
 
 #ifdef WIN32
    // For Windows, we only need to register/unregister the callback function, not the individual signals
@@ -104,7 +104,7 @@ status_t SignalMultiplexer :: RegisterSignals()
       int sigNum = _currentSignalSet[i];
       if (sigaction(sigNum, &newact, NULL) == -1) 
       {
-         LogTime(MUSCLE_LOG_WARNING, "Couldn't install signal handler for signal #%i\n", sigNum);
+         LogTime(MUSCLE_LOG_WARNING, "Could not install signal handler for signal #%i\n", sigNum);
          UnregisterSignals();
          return B_ERROR;
       }

@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleAsyncDataIO_h
 #define MuscleAsyncDataIO_h
@@ -15,7 +15,7 @@ namespace muscle {
  * It does this by handing the file I/O operations off to a separate internal thread, so that the main
  * thread will never block.
  */
-class AsyncDataIO : public DataIO, private Thread
+class AsyncDataIO : public DataIO, private Thread, private CountedObject<AsyncDataIO>
 {
 public:
    /**
@@ -44,7 +44,8 @@ public:
    /** Will tell the I/O thread to shut down its I/O, asynchronously. */
    virtual void Shutdown();
 
-   virtual const ConstSocketRef & GetSelectSocket() const {return const_cast<AsyncDataIO &>(*this).GetOwnerWakeupSocket();}
+   virtual const ConstSocketRef & GetReadSelectSocket()  const {return const_cast<AsyncDataIO &>(*this).GetOwnerWakeupSocket();}
+   virtual const ConstSocketRef & GetWriteSelectSocket() const {return const_cast<AsyncDataIO &>(*this).GetOwnerWakeupSocket();}
 
    /** AsyncDataIO::GetLength() always returns -1, since the current length of the I/O is not well-defined outside of the internal I/O thread. */
    virtual int64 GetLength() {return -1;}

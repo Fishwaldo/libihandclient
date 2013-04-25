@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleAbstractMessageIOGateway_h
 #define MuscleAbstractMessageIOGateway_h
@@ -103,7 +103,7 @@ protected:
  *  Abstract base class representing an object that can send/receive 
  *  Messages via a DataIO byte-stream.
  */
-class AbstractMessageIOGateway : public RefCountable, public PulseNode
+class AbstractMessageIOGateway : public RefCountable, public AbstractGatewayMessageReceiver, public PulseNode, private CountedObject<AbstractMessageIOGateway>
 {
 public:
    /** Default Constructor. */
@@ -117,7 +117,7 @@ public:
     * @param messageRef A reference to the Message to send out through the gateway.
     * @return B_NO_ERROR on success, B_ERROR iff for some reason the message can't be queued (out of memory?)
     */
-   status_t AddOutgoingMessage(const MessageRef & messageRef) {return _hosed ? B_ERROR : _outgoingMessages.AddTail(messageRef);}
+   virtual status_t AddOutgoingMessage(const MessageRef & messageRef) {return _hosed ? B_ERROR : _outgoingMessages.AddTail(messageRef);}
 
    /**
     * Writes some of our outgoing message bytes to the wire.
@@ -269,30 +269,6 @@ protected:
     */
    virtual int32 DoInputImplementation(AbstractGatewayMessageReceiver & receiver, uint32 maxBytes = MUSCLE_NO_LIMIT) = 0;
 
-   /**
-    * Convenience method to allocate or reallocate a buffer.  When this method returns
-    * successfully, (*bufPtr) will point to a buffer that is at least (desiredSize) bytes long.
-    * @param bufPtr points to a pointer to the buffer.  (May point to a NULL
-    *               pointer if no buffer is currently allocated)
-    * @param bufSize points to the current size of the buffer.  On return, this value is changed to
-    *                reflect the new buffer size.
-    * @param desiredSize indicates the minimum new buffer size required.
-    * @param copySize indicates the number of bytes to copy out of the
-    *                 old buffer and into the new one, if a reallocation is necessary.
-    * @return B_NO_ERROR on success, B_ERROR on failure (i.e. out of memory).
-    */
-   status_t EnsureBufferSize(uint8 ** bufPtr, uint32 * bufSize, uint32 desiredSize, uint32 copySize);
-
-   /**
-    * Convenience method; frees the given buffer and resets it to NULL, if the buffer is greater
-    * than 10 kilobytes big.  (Buffers smaller than that are not effected, since it's probably cheaper
-    * to keep them around and avoid having to deallocate and reallocate them all the time).
-    * @param bufPtr points to a pointer to the buffer.  (May point to a NULL pointer if
-    *               no buffer is currently allocated).  The pointer may be set to NULL if the buffer was freed.
-    * @param bufSize points to the size-value of the buffer.  May be set to 0 if the buffer was freed.
-    */
-   void FreeLargeBuffer(uint8 ** bufPtr, uint32 * bufSize);
-
    /** Call this method to flag this gateway as hosed--that is, to say that an unrecoverable error has occurred. */
    void SetHosed() {_hosed = true;}
   
@@ -311,6 +287,11 @@ protected:
 
    /** Called by ExecuteSynchronousMessaging() when all Messages in a batch have been received.  Default implementation just passes the call on to the like-named method in (r) */ 
    virtual void SynchronousEndMessageReceivedFromGatewayBatch(AbstractGatewayMessageReceiver & r) {r.EndMessageReceivedFromGatewayBatch();}
+
+   /** Implementation of the AbstracteMessageIOGatewayReceiver interface:  calls AddOutgoingMessage(msg).
+     * This way you can have the input of one gateway go directly to the output of another, without any intermediate step.
+     */
+   virtual void MessageReceivedFromGateway(const MessageRef & msg, void * /*userData*/) {(void) AddOutgoingMessage(msg);}
 
 private:
    friend class ScratchProxyReceiver;

@@ -1,14 +1,16 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleDataIO_h
 #define MuscleDataIO_h
 
 #include "util/Socket.h"
+#include "util/TimeUtilityFunctions.h"  // for MUSCLE_TIME_NEVER
+#include "util/CountedObject.h"
 
 namespace muscle {
  
 /** Abstract base class for a byte-stream Data I/O interface, similar to Be's BDataIO.  */
-class DataIO : public RefCountable
+class DataIO : public RefCountable, private CountedObject<DataIO>
 {
 public:
    /** Values to pass in to DataIO::Seek()'s second parameter */
@@ -85,18 +87,34 @@ public:
    virtual void Shutdown() = 0;
 
    /**
-    * If this DataIO is usable with select(), this method should return
-    * the ConstSocketRef object containing the file descriptor to select on 
-    * for this DataIO.  If this DataIO isn't usable with select(), then 
-    * this method should return GetNullSocket().
+    * This method should return a ConstSocketRef object containing a file descriptor 
+    * that can be passed to the readSet argument of select(), so that select() can 
+    * return when there is data available to be read from this DataIO (via Read()).
     *
-    * Note that the only thing you are allowed to do with the returned file descriptor
-    * is pass it to select().  For all other operations, use the appropriate
+    * If this DataIO cannot provide a socket that will notify select() about
+    * data-ready-to-be-read, then this method should return GetNullSocket().
+    *
+    * Note that the only thing you are allowed to do with this returned file descriptor
+    * is pass it to select()'s readSet.  For all other operations, use the appropriate
     * methods in the DataIO interface.  If you attempt to do any other I/O operations
-    * on this file descriptor directly, the results are non-portable and undefined 
-    * and will probably break your program.
+    * on this file descriptor directly, the results are undefined.
     */
-   virtual const ConstSocketRef & GetSelectSocket() const = 0;
+   virtual const ConstSocketRef & GetReadSelectSocket() const = 0;
+
+   /**
+    * This method should return a ConstSocketRef object containing a file descriptor 
+    * that can be passed to the writeSet argument of select(), so that select() can 
+    * return when there is buffer space available to Write() to this DataIO.
+    *
+    * If this DataIO cannot provide a socket that will notify select() about
+    * space-ready-to-be-written-to, then this method should return GetNullSocket().
+    *
+    * Note that the only thing you are allowed to do with this returned file descriptor
+    * is pass it to select()'s writeSet.  For all other operations, use the appropriate
+    * methods in the DataIO interface.  If you attempt to do any other I/O operations
+    * on this file descriptor directly, the results are undefined.
+    */
+   virtual const ConstSocketRef & GetWriteSelectSocket() const = 0;
 
    /**
     * Optional interface for returning information on when a given byte

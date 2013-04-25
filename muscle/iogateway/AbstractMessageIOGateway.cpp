@@ -1,7 +1,8 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
 
 #include "iogateway/AbstractMessageIOGateway.h"
 #include "util/NetworkUtilityFunctions.h"
+#include "util/SocketMultiplexer.h"
 
 namespace muscle {
 
@@ -13,40 +14,6 @@ AbstractMessageIOGateway :: AbstractMessageIOGateway() : _hosed(false), _flushOn
 AbstractMessageIOGateway :: ~AbstractMessageIOGateway() 
 {
    // empty
-}
-
-// Handles buffer allocation and re-allocation
-status_t
-AbstractMessageIOGateway ::
-EnsureBufferSize(uint8 ** bufPtr, uint32 * bufSize, uint32 desiredSize, uint32 copySize)
-{
-   uint8 * oldBuffer = *bufPtr;
-   uint32 oldBufSize = *bufSize;
-
-   if ((oldBuffer == NULL)||(oldBufSize < desiredSize))
-   {
-      uint8 * newBuffer = newnothrow_array(uint8, desiredSize);
-      if (newBuffer == NULL) {WARN_OUT_OF_MEMORY; return B_ERROR;}
-
-      *bufPtr  = newBuffer;
-      *bufSize = desiredSize;
-
-      if (copySize > 0) memcpy(newBuffer, oldBuffer, copySize);
-      delete [] oldBuffer;
-   }
-   return B_NO_ERROR;
-}
-
-void 
-AbstractMessageIOGateway :: 
-FreeLargeBuffer(uint8 ** buf, uint32 * size)
-{
-   if ((*buf)&&(*size > 10*1024))  // if the buffer is greater than 10KB, free it
-   {
-      delete [] (*buf);
-      *buf = NULL;
-      *size = 0;
-   }
 }
 
 void
@@ -105,39 +72,21 @@ status_t
 AbstractMessageIOGateway :: 
 ExecuteSynchronousMessaging(AbstractGatewayMessageReceiver * optReceiver, uint64 timeoutPeriod)
 {
-   int fd = GetDataIO()() ? GetDataIO()()->GetSelectSocket().GetFileDescriptor() : -1;
-   if (fd < 0) return B_ERROR;  // no socket to transmit or receive on!
+   int readFD  = GetDataIO()() ? GetDataIO()()->GetReadSelectSocket().GetFileDescriptor()  : -1;
+   int writeFD = GetDataIO()() ? GetDataIO()()->GetWriteSelectSocket().GetFileDescriptor() : -1;
+   if ((readFD < 0)||(writeFD < 0)) return B_ERROR;  // no socket to transmit or receive on!
 
    ScratchProxyReceiver scratchReceiver(this, optReceiver);
-   bool hasTimeout = (timeoutPeriod != MUSCLE_TIME_NEVER);
-   uint64 endTime = hasTimeout ? (GetRunTime64()+timeoutPeriod) : MUSCLE_TIME_NEVER;
-   fd_set readSet, writeSet;
+   uint64 endTime = (timeoutPeriod == MUSCLE_TIME_NEVER) ? MUSCLE_TIME_NEVER : (GetRunTime64()+timeoutPeriod);
+   SocketMultiplexer multiplexer;
    while(IsStillAwaitingSynchronousMessagingReply())
    {
-      uint64 now = GetRunTime64();
-      if (now >= endTime) return B_ERROR;
-
-      fd_set * rset = NULL;
-      if (optReceiver)
-      {
-         rset = &readSet;
-         FD_ZERO(rset);
-         FD_SET(fd, rset);
-      }
-
-      fd_set * wset = NULL;
-      if (HasBytesToOutput())
-      {
-         wset = &writeSet;
-         FD_ZERO(wset);
-         FD_SET(fd, wset);
-      }
-
-      struct timeval tv; 
-      if (hasTimeout) Convert64ToTimeVal(muscleMax((int64)0, (int64)(endTime-now)), tv);
-      if (select(fd+1, rset, wset, NULL, hasTimeout ? &tv : NULL) < 0)  return B_ERROR;
-      if ((wset)&&(FD_ISSET(fd, wset))&&(DoOutput() < 0))               return B_ERROR;
-      if ((rset)&&(FD_ISSET(fd, rset))&&(DoInput(scratchReceiver) < 0)) return B_ERROR;
+      if (GetRunTime64() >= endTime) return B_ERROR;
+      if (optReceiver)        multiplexer.RegisterSocketForReadReady(readFD);
+      if (HasBytesToOutput()) multiplexer.RegisterSocketForWriteReady(writeFD);
+      if ((multiplexer.WaitForEvents(endTime) < 0)                        ||
+         ((multiplexer.IsSocketReadyForWrite(writeFD))&&(DoOutput() < 0)) ||
+         ((multiplexer.IsSocketReadyForRead(readFD))&&(DoInput(scratchReceiver) < 0))) return IsStillAwaitingSynchronousMessagingReply() ? B_ERROR : B_NO_ERROR;
    }
    return B_NO_ERROR;
 }

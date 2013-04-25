@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */  
 
 #include "reflector/SignalHandlerSession.h"
 #include "system/SignalMultiplexer.h"
@@ -19,7 +19,7 @@ int32 SignalHandlerSession :: DoInput(AbstractGatewayMessageReceiver &, uint32)
    while(1)
    {
       char buf[64];
-      int32 bytesReceived = ReceiveData(GetSessionSelectSocket(), buf, sizeof(buf), false);
+      int32 bytesReceived = ReceiveData(GetSessionReadSelectSocket(), buf, sizeof(buf), false);
       if (bytesReceived > 0)
       {
          byteCount += bytesReceived;
@@ -49,6 +49,9 @@ void SignalHandlerSession :: SignalReceived(int whichSignal)
    EndServer();
 }
 
+static bool _wasSignalCaught = false;
+bool WasSignalCaught() {return _wasSignalCaught;}
+
 void SignalHandlerSession :: SignalHandlerFunc(int sigNum)
 {
    // Note that this method is called within the context of the POSIX/Win32 signal handler and thus we have to
@@ -62,6 +65,7 @@ void SignalHandlerSession :: SignalHandlerFunc(int sigNum)
       {
          if (sigNum == nextSigNum)
          {
+            _wasSignalCaught = true;
             char c = (char) sigNum;
             (void) SendData(_handlerSocket, &c, 1, false);  // send the signal value to the main thread so it can handle it later
             break;

@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MusclePacketizedDataIO_h
 #define MusclePacketizedDataIO_h
@@ -9,7 +9,7 @@
 namespace muscle {
 
 /**
- * This class can be used to "wrap" a streaming I/O object (e.g. a TCPSocketDataIO) in order to make 
+ * This class can be used to "wrap" a streaming I/O object (for example a TCPSocketDataIO) in order to make 
  * it appear like a packet-based I/O object (e.g. a UDPSocketDataIO) to the calling code.
  * 
  * It does this by inserting message-length fields into the outgoing byte stream, and parsing
@@ -21,7 +21,7 @@ namespace muscle {
  *
  * You might use this class to simulate a lossless UDP connection by "tunneling" UDP over TCP.
  */
-class PacketizedDataIO : public DataIO
+class PacketizedDataIO : public DataIO, private CountedObject<PacketizedDataIO>
 {
 public:
    /**
@@ -49,7 +49,8 @@ public:
    virtual uint64 GetOutputStallLimit() const {return _slaveIO() ? _slaveIO()->GetOutputStallLimit() : MUSCLE_TIME_NEVER;}
    virtual void FlushOutput() {if (_slaveIO()) _slaveIO()->FlushOutput();}
    virtual void Shutdown() {if (_slaveIO()) _slaveIO()->Shutdown(); _slaveIO.Reset(); _outputBuffer.Clear(true); _inputBuffer.Clear(true); _inputBufferSizeBytesRead = 0;}
-   virtual const ConstSocketRef & GetSelectSocket() const {return _slaveIO() ? _slaveIO()->GetSelectSocket() : GetNullSocket();}
+   virtual const ConstSocketRef & GetReadSelectSocket()  const {return _slaveIO() ? _slaveIO()->GetReadSelectSocket()  : GetNullSocket();}
+   virtual const ConstSocketRef & GetWriteSelectSocket() const {return _slaveIO() ? _slaveIO()->GetWriteSelectSocket() : GetNullSocket();}
    virtual int64 GetLength() {return _slaveIO() ? _slaveIO()->GetLength() : -1;}
 
    virtual bool HasBufferedOutput() const {return (_outputBufferBytesSent < _outputBuffer.GetNumBytes());}

@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleTuple_h
 #define MuscleTuple_h
@@ -96,6 +96,9 @@ public:
 
    /** Returns the dot-product of (this) and (rhs) */
    ItemType DotProduct(const Tuple & rhs) const {ItemType dp = ItemType(); for (int i=0; i<NumItems; i++) dp += (_items[i]*rhs._items[i]); return dp;}
+
+   /** Returns true iff one of our member items is equal to (value). */
+   bool Contains(const ItemType & value) const {return (IndexOf(value) >= 0);}
 
    /** Returns the index of the first value equal to (value), or -1 if not found. */
    int IndexOf(const ItemType & value) const {for (int i=0; i<NumItems; i++) if (_items[i] == value) return i; return -1;}
@@ -195,6 +198,15 @@ public:
 
    /** Convenience method -- returns a read-only pointer to the nth item in our tuple. */
    const ItemType * GetItemPointer(uint32 which) const {return &_items[which];}
+
+   /** Returns a hash code for this Tuple.  Implementing this allows Tuples to be used as keys in Hashtables. */
+   uint32 HashCode() const
+   {
+      typename DEFAULT_HASH_FUNCTOR(ItemType) hashFunctor;
+      uint32 ret = 0;
+      for (uint32 i=0; i<NumItems; i++) ret += (i+hashFunctor(_items[i]));
+      return ret;
+   }
 
 private:
    /** Shifts the values of the indices left (numPlaces) spaces.  Blanks are filled in on the right. */

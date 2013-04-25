@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleFailoverDataIO_h
 #define MuscleFailoverDataIO_h
@@ -31,7 +31,7 @@ public:
   * held DataIO and start using the second one instead (and so on).  This is useful
   * for providing automatic failover/redundancy for important connections. 
   */
-class FailoverDataIO : public DataIO
+class FailoverDataIO : public DataIO, private CountedObject<FailoverDataIO>
 {
 public:
    /** Default Constructor.  Be sure to add some child DataIOs to our Queue of
@@ -85,7 +85,8 @@ public:
 
    virtual void Shutdown() {_childIOs.Clear();}
 
-   virtual const ConstSocketRef & GetSelectSocket() const {return (HasChild()) ? GetChild()->GetSelectSocket() : GetNullSocket();}
+   virtual const ConstSocketRef & GetReadSelectSocket()  const {return HasChild() ? GetChild()->GetReadSelectSocket()  : GetNullSocket();}
+   virtual const ConstSocketRef & GetWriteSelectSocket() const {return HasChild() ? GetChild()->GetWriteSelectSocket() : GetNullSocket();}
 
    virtual status_t GetReadByteTimeStamp(int32 whichByte, uint64 & retStamp) const {return HasChild() ? GetChild()->GetReadByteTimeStamp(whichByte, retStamp) : B_ERROR;}
 

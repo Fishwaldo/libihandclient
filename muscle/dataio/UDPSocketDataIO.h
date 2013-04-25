@@ -1,4 +1,4 @@
-/* This file is Copyright 2000-2009 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
+/* This file is Copyright 2000-2013 Meyer Sound Laboratories Inc.  See the included LICENSE.txt file for details. */
 
 #ifndef MuscleUDPSocketDataIO_h
 #define MuscleUDPSocketDataIO_h
@@ -13,7 +13,7 @@ namespace muscle {
 /**
  *  Data I/O to and from a UDP socket! 
  */
-class UDPSocketDataIO : public DataIO
+class UDPSocketDataIO : public DataIO, private CountedObject<UDPSocketDataIO>
 {
 public:
    /**
@@ -76,8 +76,8 @@ public:
     */
    virtual void Shutdown() {_sock.Reset();}
 
-   /** Returns our socket descriptor */
-   virtual const ConstSocketRef & GetSelectSocket() const {return _sock;}
+   virtual const ConstSocketRef & GetReadSelectSocket()  const {return _sock;}
+   virtual const ConstSocketRef & GetWriteSelectSocket() const {return _sock;}
 
    /** Call this to make our Write() method use sendto() with the specified
      * destination address and port.  Calling this with (invalidIP, 0) will
