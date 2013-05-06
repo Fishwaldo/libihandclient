@@ -12,7 +12,7 @@ noinst_HEADERS = util/ByteBuffer.h util/Queue.h message/Message.h util/FlatCount
 	dataio/TCPSocketDataIO.h iogateway/AbstractMessageIOGateway.h util/NetworkUtilityFunctions.h \
 	util/PulseNode.h util/PointerAndBool.h util/SocketMultiplexer.h util/Directory.h util/FilePathInfo.h \
 	util/CountedObject.h util/DemandConstructedObject.h dataio/FileDataIO.h system/SystemInfo.h \
-	util/StringTokenizer.h
+	util/StringTokenizer.h util/PointerAndBool.h
 	
 EXTRA_DIST = muscle.vcproj	
 	
