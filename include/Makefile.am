@@ -1,2 +1,2 @@
-include_HEADERS = MsgTypes.hpp ZBLocations.hpp ZBHAProfiles.hpp DeviceTypes.hpp
-noinst_HEADERS  = varcontainer.hpp win32_support.hpp
+pkginclude_HEADERS = MsgTypes.hpp ZBLocations.hpp ZBHAProfiles.hpp DeviceTypes.hpp varcontainer.hpp
+noinst_HEADERS  = win32_support.hpp
