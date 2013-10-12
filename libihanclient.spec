@@ -8,9 +8,14 @@ Group: Productivity/Networking/Other
 Summary: Intelegent Home Automation Network Client Library
 URL: http://wiki.my-ho.st/confluence/display/HTC/
 License: LGPL2+
-Version: 0.1
-Release: 1
-BuildRequires: gcc-c++ make boost-devel pkgconfig
+Version: 0.1.1381591635
+Release: 0
+BuildRequires: gcc-c++ make boost-devel pkgconfig automake libtool
+%if 0%{?suse_version} > 0
+BuildRequires: liblog4cxx-devel
+%else
+BuildRequires: log4cxx-devel
+%endif
 Source0: libihanclient-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-root
@@ -62,6 +67,7 @@ rm %{buildroot}/usr/bin/demo
 
 %files -n %{name}-devel
 %defattr(-,root,root,-)
+%dir %{_includedir}/libihanclient/
 %{_includedir}/libihanclient/*
 %{_libdir}/libihanclient.la
 %{_libdir}/libihanclient.so
