@@ -1,0 +1,21 @@
+Source: libihanclient
+Maintainer: Justin Hammond <justin@dynam.ac>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 8),libboost-dev,libtool,automake,autoconf,libboost-system-dev,libboost-signals-dev,libboost-program-options-dev,libboost-filesystem-dev,libboost-date-time-dev,libboost-regex-dev,pkg-config,liblog4cxx10-dev
+
+Package: libihanclient1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Client Library for Intelegent Home Automation Network Software
+ Client Library for Intelegent Home Automation Network Software. Use this
+ library for communicating with your home automation network run by iHanD
+
+Package: libihanclient1-dev
+Architecture: any
+Section: libdevel
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Development Files for Intelegent Home Automation Network Software
+ Development files Client Library for Intelegent Home Automation Network
+ Software

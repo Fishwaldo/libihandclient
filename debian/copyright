@@ -1,0 +1,10 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: libiHanClient
+Upstream-Contact: Justin Hammond <justin@dynam.ac>
+Source: http://www.dynam.ac/
+
+Files: *
+Copyright: 2013 Justin Hammond <justin@dynam.ac>
+License: LGPL-2.1
+ /usr/share/common-licenses/LGPL-2.1
+

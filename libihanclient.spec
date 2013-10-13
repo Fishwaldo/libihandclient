@@ -62,7 +62,7 @@ rm %{buildroot}/usr/bin/demo
 %{_libdir}/libihanclient.so.*
 #%dir %{_prefix}/include/anetd/
 #%dir %{_prefix}/share/doc/libanetd-%{version}/
-#%doc %{_prefix}/share/doc/libanetd-%{version}/
+%doc %{_prefix}/share/doc/libihanclient/
 %doc README
 
 %files -n %{name}-devel

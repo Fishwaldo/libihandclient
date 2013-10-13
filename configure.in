@@ -102,6 +102,6 @@ if test ! -f .hush; then \
 	read -p "Press Enter key to read the release notes"; \
 	clear; \
 	more README; \
-	echo "Run 'make' (or 'gmake' on some systems) to compile NeoStats."; \
+	echo "Run 'make' (or 'gmake' on some systems) to compile libiHanClient."; \
 	echo "If you require support, see the README file."; \
 fi;
