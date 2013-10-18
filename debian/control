@@ -7,8 +7,7 @@ Build-Depends: debhelper (>= 8),libboost-dev,libtool,automake,autoconf,libboost-
 
 Package: libihanclient
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Depends: libboost, libboost-date-time
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost, libboost-date-time
 Description: Client Library for Intelegent Home Automation Network Software
  Client Library for Intelegent Home Automation Network Software. Use this
  library for communicating with your home automation network run by iHanD
@@ -16,8 +15,7 @@ Description: Client Library for Intelegent Home Automation Network Software
 Package: libihanclient-dev
 Architecture: any
 Section: libdevel
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Depends: libihandclient
+Depends: ${shlibs:Depends}, ${misc:Depends}, libihandclient
 Description: Development Files for Intelegent Home Automation Network Software
  Development files Client Library for Intelegent Home Automation Network
  Software
