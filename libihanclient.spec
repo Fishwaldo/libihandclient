@@ -54,7 +54,7 @@ rm %{buildroot}/usr/bin/demo
 %files
 %defattr(-,root,root,-)
 %{_libdir}/libihanclient.so.*
-%doc %{_prefix}/share/doc/libihanclient-%{version}/
+%doc %{_prefix}/share/doc/libihanclient-0.1/
 %doc README
 
 %files -n %{name}-devel
