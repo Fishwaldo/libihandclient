@@ -58,17 +58,16 @@ rm %{buildroot}/usr/bin/demo
 
 %files
 %defattr(-,root,root,-)
-#%{_prefix}/bin/anetd
 %{_libdir}/libihanclient.so.*
-#%dir %{_prefix}/include/anetd/
-#%dir %{_prefix}/share/doc/libanetd-%{version}/
-%doc %{_prefix}/share/doc/libihanclient/
+%doc %{_prefix}/share/doc/libihanclient-%{version}/
 %doc README
 
 %files -n %{name}-devel
 %defattr(-,root,root,-)
-%dir %{_includedir}/libihanclient/
-%{_includedir}/libihanclient/*
+%dir %{_includedir}/iHanClient/
+%dir %{_includedir}/muscle/
+%{_includedir}/iHanClient/*
+%{_includedir}/muscle/*
 %{_libdir}/libihanclient.la
 %{_libdir}/libihanclient.so
 %{_libdir}/pkgconfig/*.pc
