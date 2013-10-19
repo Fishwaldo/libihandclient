@@ -57,6 +57,7 @@ rm %{buildroot}/usr/bin/demo
 
 %files
 %defattr(-,root,root,-)
+%dir %{_libdir}
 %{_libdir}/libihanclient.so.*
 %doc %{_prefix}/share/doc/libihanclient-0.1/
 %doc README
@@ -65,6 +66,8 @@ rm %{buildroot}/usr/bin/demo
 %defattr(-,root,root,-)
 %dir %{_includedir}/iHanClient/
 %dir %{_includedir}/muscle/
+%dir %{_libdir}
+%dir %{_libdir}/pkgconfig/
 %{_includedir}/iHanClient/*
 %{_includedir}/muscle/*
 %{_libdir}/libihanclient.la
