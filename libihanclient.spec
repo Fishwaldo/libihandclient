@@ -50,7 +50,11 @@ touch .hush
 make %{?_smp_mflags}
 
 %check
+%ifnarch %{arm}
 make check
+%else
+GTEST_FILTER=*-*Serialize make check
+%endif
 
 %install
 make install DESTDIR=${RPM_BUILD_ROOT} 
