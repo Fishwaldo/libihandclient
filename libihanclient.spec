@@ -11,11 +11,6 @@ License: LGPL2+
 Version: 0.1.1381591635
 Release: 0
 BuildRequires: gcc-c++ make boost-devel pkgconfig automake libtool
-%if 0%{?suse_version} > 0
-BuildRequires: liblog4cxx-devel
-%else
-BuildRequires: log4cxx-devel
-%endif
 Source0: libihanclient-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-root
@@ -62,17 +57,16 @@ rm %{buildroot}/usr/bin/demo
 
 %files
 %defattr(-,root,root,-)
-#%{_prefix}/bin/anetd
 %{_libdir}/libihanclient.so.*
-#%dir %{_prefix}/include/anetd/
-#%dir %{_prefix}/share/doc/libanetd-%{version}/
-%doc %{_prefix}/share/doc/libihanclient/
+%doc %{_prefix}/share/doc/libihanclient-0.1/
 %doc README
 
 %files -n %{name}-devel
 %defattr(-,root,root,-)
-%dir %{_includedir}/libihanclient/
-%{_includedir}/libihanclient/*
+%dir %{_includedir}/iHanClient/
+%dir %{_includedir}/muscle/
+%{_includedir}/iHanClient/*
+%{_includedir}/muscle/*
 %{_libdir}/libihanclient.la
 %{_libdir}/libihanclient.so
 %{_libdir}/pkgconfig/*.pc

@@ -1,4 +1,4 @@
 usr/include/*
 usr/lib/lib*.a
 usr/lib/lib*.so
-usr/share/doc/libihanclient/*
+usr/share/doc/libihanclient-0.1/*

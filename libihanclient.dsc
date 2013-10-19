@@ -5,7 +5,7 @@ Architecture: any
 Version: 1.0-1
 Maintainer: Justin Hammond <justin@dynam.ac>
 Standards-Version: 3.9.3
-Build-Depends: debhelper (>= 8), libboost-dev, libtool, automake, autoconf, libboost-system-dev, libboost-signals-dev, libboost-program-options-dev, libboost-filesystem-dev, libboost-date-time-dev, libboost-regex-dev, pkg-config, liblog4cxx10-dev
+Build-Depends: debhelper (>= 8), libboost-dev, libtool, automake, autoconf, libboost-date-time-dev, pkg-config
 Package-List: 
  libihanclient1 deb misc optional
  libihanclient1-dev deb libdevel optional
