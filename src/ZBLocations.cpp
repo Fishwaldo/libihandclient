@@ -101,6 +101,32 @@ const char LocationStrings[][0x48] = {
 		{ LOC_TERRACE_TXT },
 		{ LOC_ROOF_TXT },
 	};
+
+const char DeviceTypeStrings[][30] = {
+	{ "Unknown/Invalid" },
+	{ "Muln" },
+	{ "iHanD"},
+	{ "ControlPad"},
+	{ "LCD Screen"},
+	{ "LCD Scrren (Small)"},
+	{ "LCD Screen (Graphic)"},
+	{ "RGB Led Light"},
+	{ "Temp Sensor"},
+	{ "Light Sensor"},
+	{ "Movement Sensor"},
+	{ "General Purpose Input"},
+	{ "General Purpose Output"},
+	{ "Analog to Digital Converter"},
+	{ "Scene"},
+	{ "ControlPanel"},
+	{ "Weather Plugin"},
+	{ "Z-Wave Node"},
+	{ "PIC32 Device"},
+	{ "Light Switch"},
+	{ "Presure Sensor"},
+};
+
+
 #if 0
 void getType(long type, char *result) {
 	switch (type) {

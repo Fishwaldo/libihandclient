@@ -153,4 +153,5 @@
 #define LOC_SIZE 0x48
 
 extern const char LocationStrings[][0x48];
+extern const char DeviceTypeStrings[][30];
 #endif
