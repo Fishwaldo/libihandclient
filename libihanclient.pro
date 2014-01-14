@@ -4,7 +4,9 @@
 #
 #-------------------------------------------------
 
-CONFIG = staticlib
+include (./boost.pri)
+
+CONFIG = lib
 
 QT       -= core gui
 
@@ -25,7 +27,8 @@ SOURCES += src/varcontainer.cpp \
     muscle/syslog/SysLog.cpp \
     muscle/iogateway/MessageIOGateway.cpp \
     muscle/iogateway/AbstractMessageIOGateway.cpp \
-    muscle/system/SetupSystem.cpp
+    muscle/system/SetupSystem.cpp \
+    muscle/util/Directory.cpp
 
 HEADERS += include/varcontainer.hpp \
     include/config.h \
