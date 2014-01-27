@@ -28,6 +28,8 @@ MSG_WHAT_PONG = 0xFE,
 MSG_WHAT_PING,
 };
 
+typedef MSG_WHAT MsgType;
+
 /* discover messages */
 #define MSG_STR_CTRLPORT "CtrlPort"
 #define MSG_STR_CAPDEVICE "CapDvc"
@@ -35,6 +37,7 @@ MSG_WHAT_PING,
 #define MSG_STR_CAPCONTROL "CapCtr"
 #define MSG_STR_CAPREPORT "CapRpt"
 #define MSG_STR_CAPENDPT "CapEpt"
+#define MSG_STR_HOSTID "HostID"
 
 #define MSG_STR_AUTHKEY "AuthKey"
 

@@ -153,7 +153,10 @@ template<class Archive> void VarStorage_t::serialize(Archive & ar, const unsigne
 }
 
 #ifdef Q_OBJECT
-Q_DECLARE_METATYPE(VarStorage);
+Q_DECLARE_METATYPE(VarStorage_t);
+//Q_DECLARE_METATYPE(VarStorage);
+Q_DECLARE_METATYPE(boost::shared_ptr<VarStorage_t>);
+Q_DECLARE_METATYPE(HashVals);
 #endif
 
 

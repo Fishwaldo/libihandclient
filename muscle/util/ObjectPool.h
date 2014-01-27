@@ -11,7 +11,7 @@ namespace muscle {
 // Uncomment this #define to disable object pools (i.e. turn them into
 // fancy new/delete operators).  This is helpful if you are trying
 // to track down memory leaks.
-//#define DISABLE_OBJECT_POOLING 1
+#define DISABLE_OBJECT_POOLING 1
 
 #ifndef DEFAULT_MUSCLE_POOL_SLAB_SIZE
 # define DEFAULT_MUSCLE_POOL_SLAB_SIZE (4*1024)  // let's have each slab fit nicely into a 4KB page
