@@ -144,10 +144,7 @@ private:
 #define VarContainerFactory(x) VarStorage x(new VarStorage_t());
 
 std::ostream& operator<<(std::ostream&, const VarStorage_t &);
-std::ostream& operator<<(std::ostream &os, const VarStorage &ptr) {
-	os << *ptr.get();
-	return os;
-}
+std::ostream& operator<<(std::ostream &os, const VarStorage &ptr);
 template<class Archive> void VarStorage_t::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::make_nvp("VarContainer", this->Variables);
 }

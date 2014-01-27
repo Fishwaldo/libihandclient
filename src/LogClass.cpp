@@ -32,7 +32,7 @@
 
 
 
-using namespace iHanD::Logging;
+using namespace iHanDClient::Logging;
 
 
 inline std::string getLevelString(LogLevel lvl) {
@@ -126,7 +126,7 @@ LogLevel Log::GetLoggingState
 (
 )
 {
-	currentlevel;
+	return currentlevel;
 }
 
 //-----------------------------------------------------------------------------
@@ -226,8 +226,6 @@ void LogImpl::Write
 		std::string message
 )
 {
-	char lineBuf[1024] = {};
-	int lineLen = 0;
 	if (!m_bConsoleOutput)
 		return;
 	//std::cout << this->m_saveLevel << " " << _logLevel << std::endl;

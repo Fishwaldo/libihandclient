@@ -207,7 +207,7 @@ int VarStorage_t::addValueP(std::string FieldName, StoredVals_t SV) {
 			storedval->push_back(SV);
 			return storedval->size();
 		} else {
-			iHanD::Logging::LogError(std::string("Fieldname " + FieldName + " is a " + getType(this->Variables[FieldName]->front()) + " But Value is a " + getType(SV)));
+			iHanDClient::Logging::LogError(std::string("Fieldname " + FieldName + " is a " + getType(this->Variables[FieldName]->front()) + " But Value is a " + getType(SV)));
 			//delete SV;
 			return -1;
 		}
@@ -283,7 +283,7 @@ int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos)
 		if (this->Variables[FieldName]->front()->StoredType == SV->StoredType) {
 			storedval = this->Variables[FieldName];
 		} else {
-			iHanD::Logging::LogError(std::string("Fieldname " + FieldName + " is a " + getType(this->Variables[FieldName]->front()) + " But Replacement Value is a " + getType(SV)));
+			iHanDClient::Logging::LogError(std::string("Fieldname " + FieldName + " is a " + getType(this->Variables[FieldName]->front()) + " But Replacement Value is a " + getType(SV)));
 			//delete SV;
 			return -1;
 		}
@@ -292,7 +292,7 @@ int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos)
 		return this->addValueP(FieldName, SV);
 	}
 	if ((unsigned int)pos > storedval->size()) {
-		iHanD::Logging::LogError(std::string("Filedname size " + FieldName + "Is smaller than " + lexical_cast<std::string>(pos)));
+		iHanDClient::Logging::LogError(std::string("Filedname size " + FieldName + "Is smaller than " + lexical_cast<std::string>(pos)));
 		//delete SV;
 		return -1;
 	}
@@ -373,7 +373,7 @@ StoredVals_t VarStorage_t::getValueP(std::string FieldName, StoredType_t type, i
 		Vals *storedval = this->Variables[FieldName];
 		StoredVals_t SV = storedval->at(pos);
 		if (SV->StoredType != type) {
-			iHanD::Logging::LogError(std::string("Field " + FieldName + " is not of type " + getType(type) + " (" + lexical_cast<std::string>(type) + ") but type " + getType(SV) + " (" + lexical_cast<std::string>(SV->StoredType) + ")"));
+			iHanDClient::Logging::LogError(std::string("Field " + FieldName + " is not of type " + getType(type) + " (" + lexical_cast<std::string>(type) + ") but type " + getType(SV) + " (" + lexical_cast<std::string>(SV->StoredType) + ")"));
 			return StoredVals_t(new StoredVals_r);
 		}
 		return SV;
@@ -674,7 +674,12 @@ std::string VarStorage_t::getType(StoredType_t type) const {
 	}
 	return "";
 }
-
+std::ostream& operator<<(std::ostream &os, const VarStorage &ptr) {
+        os << *ptr.get();
+	return os;
+}
+                
+                
 #undef DOTAB
 int tab = 0;
 #define DOTAB for (int tabs = 0; tabs != tab; tabs++) stream << "\t"
@@ -727,4 +732,5 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 			}
 		}
 	}
+	return stream;
 }
