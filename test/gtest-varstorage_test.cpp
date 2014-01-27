@@ -35,7 +35,7 @@ namespace testing {
 				protected:
 				     virtual void SetUp() {
 						 //this->Vars &= new VarStorage();
-						 iHanD::Logging::Log::Create("", true, iHanD::Logging::LogLevel_Debug);
+						 iHanDClient::Logging::Log::Create("", true, iHanDClient::Logging::LogLevel_Debug);
 						 this->Vars.reset(new VarStorage_t());
 						 this->Vars->addIntValue("INT", (int)123);
 						 this->Vars->addStringValue("STRING", (std::string)"String");
