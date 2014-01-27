@@ -6,6 +6,7 @@
  */
 
 #include "varcontainer.hpp"
+#include "LogClass.hpp"
 #include "win32_support.hpp"
 
 
@@ -29,7 +30,8 @@ private:
   VSErrorType_t ErrorType;
 };
 
-
+VarStorage_t::VarStorage_t() {
+}
 
 VarStorage_t::VarStorage_t(muscle::MessageRef msg) {
 	this->importMuscleMsg(msg);
@@ -205,7 +207,7 @@ int VarStorage_t::addValueP(std::string FieldName, StoredVals_t SV) {
 			storedval->push_back(SV);
 			return storedval->size();
 		} else {
-			cerr << "Fieldname " << FieldName << " is a " << getType(this->Variables[FieldName]->front()) << " But Value is a " << getType(SV) << "\n";
+			iHanD::Logging::LogError(std::string("Fieldname " + FieldName + " is a " + getType(this->Variables[FieldName]->front()) + " But Value is a " + getType(SV)));
 			//delete SV;
 			return -1;
 		}
@@ -281,7 +283,7 @@ int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos)
 		if (this->Variables[FieldName]->front()->StoredType == SV->StoredType) {
 			storedval = this->Variables[FieldName];
 		} else {
-			cerr << "Fieldname " << FieldName << " is a " << getType(this->Variables[FieldName]->front()) << " But Replacement Value is a " << getType(SV) << "\n";
+			iHanD::Logging::LogError(std::string("Fieldname " + FieldName + " is a " + getType(this->Variables[FieldName]->front()) + " But Replacement Value is a " + getType(SV)));
 			//delete SV;
 			return -1;
 		}
@@ -290,7 +292,7 @@ int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos)
 		return this->addValueP(FieldName, SV);
 	}
 	if ((unsigned int)pos > storedval->size()) {
-		cerr << "Filedname size " << FieldName << "Is smaller than " << pos;
+		iHanD::Logging::LogError(std::string("Filedname size " + FieldName + "Is smaller than " + lexical_cast<std::string>(pos)));
 		//delete SV;
 		return -1;
 	}
@@ -371,7 +373,7 @@ StoredVals_t VarStorage_t::getValueP(std::string FieldName, StoredType_t type, i
 		Vals *storedval = this->Variables[FieldName];
 		StoredVals_t SV = storedval->at(pos);
 		if (SV->StoredType != type) {
-			cerr << "Field " << FieldName << " is not of type " << getType(type) << " (" << type << ") but type " << getType(SV) << " (" << SV->StoredType <<")\n";
+			iHanD::Logging::LogError(std::string("Field " + FieldName + " is not of type " + getType(type) + " (" + lexical_cast<std::string>(type) + ") but type " + getType(SV) + " (" + lexical_cast<std::string>(SV->StoredType) + ")"));
 			return StoredVals_t(new StoredVals_r);
 		}
 		return SV;
@@ -612,7 +614,7 @@ bool VarStorage_t::is_empty() {
 }
 
 #if 0
-std::string VarStorage_t::getType(const char *name) {
+std::string VarStorage_t::getType(const char *name) const {
 #ifndef WIN32
 	size_t len;
     int s;
@@ -634,10 +636,10 @@ std::vector<std::string> *VarStorage_t::getFields() {
 
 
 
-std::string VarStorage_t::getType(StoredVals_t SV) {
+std::string VarStorage_t::getType(StoredVals_t SV) const {
 	return getType(SV->StoredType);
 }
-std::string VarStorage_t::getType(StoredType_t type) {
+std::string VarStorage_t::getType(StoredType_t type) const {
 
 	switch (type) {
 		case ST_STRING:
@@ -673,4 +675,56 @@ std::string VarStorage_t::getType(StoredType_t type) {
 	return "";
 }
 
+#undef DOTAB
+int tab = 0;
+#define DOTAB for (int tabs = 0; tabs != tab; tabs++) stream << "\t"
 
+std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
+	Variables_t vars = vs.Variables;
+	Variables_t::iterator it;
+	Vals::iterator it2;
+	int i;
+	for (it=vars.begin(); it != vars.end(); it++) {
+		DOTAB;
+		stream << "Variable: " << (*it).first << " size: " << (*it).second->size() << " Type: " << vs.getType((*it).second->front()) << std::endl;
+		i = 0;
+		for (it2 = (*it).second->begin(); it2 != (*it).second->end(); it2++) {
+			DOTAB;
+			stream << "\tPos: " << i++ << " Value: ";
+			if ((*it2)->StoredType == ST_STRING) {
+					stream << (*it2)->StrVal << std::endl;
+			} else if ((*it2)->StoredType == ST_INT) {
+					stream << (*it2)->IntVal << std::endl;
+			} else if ((*it2)->StoredType == ST_LONG) {
+					stream << (*it2)->LongVal << std::endl;
+			} else if ((*it2)->StoredType == ST_LONGLONG) {
+					stream << (*it2)->LongLongVal << std::endl;
+			} else if ((*it2)->StoredType == ST_FLOAT) {
+					stream << (*it2)->FloatVal << std::endl;
+			} else if ((*it2)->StoredType == ST_HASH) {
+					stream << "Hash Variables:" <<  std::endl;
+					{
+						HashVals hv = (*it2)->HashVal;
+						std::map<std::string, HashValsVariant_t>::const_iterator hvit;
+						for (hvit = hv.begin(); hvit != hv.end(); hvit++) {
+							DOTAB;
+							cout << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
+						}
+					}
+			} else if ((*it2)->StoredType == ST_BOOL) {
+					stream << (*it2)->BoolVal << std::endl;
+			} else if ((*it2)->StoredType == ST_DATETIME) {
+					stream << (*it2)->DateTimeVal << std::endl;
+			} else if ((*it2)->StoredType == ST_VARSTORAGE) {
+					tab = tab +1;
+					stream << "{" << std::endl;
+					stream << (*it2)->VarVal;
+					//DOTAB;
+					stream <<"\t}" << std::endl;
+					tab = tab -1;
+			} else {
+					stream << "Unprintable Type" << std::endl;
+			}
+		}
+	}
+}

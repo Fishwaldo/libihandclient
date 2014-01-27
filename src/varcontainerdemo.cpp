@@ -1,8 +1,10 @@
 #include "varcontainer.hpp"
+#include "LogClass.hpp"
 
 
 
 int main(int argc, char *argv[]) {
+	iHanD::Logging::Log::Create("", true, iHanD::Logging::LogLevel_Debug);
 	VarStorage Vars;
 	Vars.reset(new VarStorage_t());
 	Vars->addIntValue("INT", (int)123);
@@ -23,4 +25,5 @@ int main(int argc, char *argv[]) {
 	VarStorage newVar(new VarStorage_t());
 	newVar->addIntValue("INT", (int)123);
 	Vars->addVarStorageValue("VARSTORAGE", newVar);
+	cout << *(Vars.get());
 }

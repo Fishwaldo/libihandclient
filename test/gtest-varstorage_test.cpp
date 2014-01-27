@@ -24,6 +24,7 @@
 #include "sp_collector.cpp"
 #endif
 #include "varcontainer.hpp"
+#include "LogClass.hpp"
 #include "../src/varcontainer.cpp"
 
 
@@ -34,7 +35,8 @@ namespace testing {
 				protected:
 				     virtual void SetUp() {
 						 //this->Vars &= new VarStorage();
-				    	 this->Vars.reset(new VarStorage_t());
+						 iHanD::Logging::Log::Create("", true, iHanD::Logging::LogLevel_Debug);
+						 this->Vars.reset(new VarStorage_t());
 						 this->Vars->addIntValue("INT", (int)123);
 						 this->Vars->addStringValue("STRING", (std::string)"String");
 						 this->Vars->addLongValue("LONG", (long)-1);

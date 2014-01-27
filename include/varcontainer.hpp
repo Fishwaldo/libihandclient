@@ -82,10 +82,11 @@ typedef struct StoredVals_r {
 typedef boost::shared_ptr<StoredVals_r> StoredVals_t;
 
 typedef std::vector<StoredVals_t> Vals;
+typedef std::map<std::string, Vals*> Variables_t;
 
 class VarStorage_t {
 public:
-	VarStorage_t() {};
+	VarStorage_t();
 	VarStorage_t(muscle::MessageRef msg);
 	~VarStorage_t();
 	void operator()(muscle::MessageRef msg);
@@ -129,19 +130,24 @@ public:
 	bool is_empty();
 	StoredType_t getType(std::string FieldName);
 private:
+	friend std::ostream& operator<<(std::ostream&, const VarStorage_t &);
 	friend class boost::serialization::access;
 	template<class Archive> void serialize(Archive & ar, const unsigned int version);
-	std::string getType(StoredVals_t SV);
-	std::string getType(StoredType_t type);
+	std::string getType(StoredVals_t SV) const;
+	std::string getType(StoredType_t type) const ;
 	int addValueP(std::string FieldName, StoredVals_t);
 	int replaceValueP(std::string FieldName, StoredVals_t val, int pos);
 	StoredVals_t getValueP(std::string FieldName, StoredType_t type, int pos);
-	std::map<std::string, Vals*> Variables;
+	Variables_t Variables;
 };
 
 #define VarContainerFactory(x) VarStorage x(new VarStorage_t());
 
-
+std::ostream& operator<<(std::ostream&, const VarStorage_t &);
+std::ostream& operator<<(std::ostream &os, const VarStorage &ptr) {
+	os << *ptr.get();
+	return os;
+}
 template<class Archive> void VarStorage_t::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::make_nvp("VarContainer", this->Variables);
 }
