@@ -221,8 +221,8 @@ typedef void * muscleVoidPointer;  /* it's a bit easier, syntax-wise, to use thi
       typedef unsigned long long     uint64;  // 32-bit and 64-bit flavors.  C'est la vie, non?
 #    endif
 #   elif defined(MUSCLE_64_BIT_PLATFORM)
-     typedef long                   int64;
-     typedef unsigned long          uint64;
+     typedef long long                   int64;
+     typedef unsigned long long          uint64;
 #   else
      typedef long long              int64;
      typedef unsigned long long     uint64;
