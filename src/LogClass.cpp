@@ -32,7 +32,7 @@
 
 
 
-using namespace iHanDClient::Logging;
+using namespace iHanClient::Logging;
 
 
 inline std::string getLevelString(LogLevel lvl) {
