@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <vector>
 #include <iostream>
-#include "LogClass.hpp"
+#include "iHanClient/LogClass.hpp"
 
 
 

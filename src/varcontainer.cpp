@@ -5,8 +5,8 @@
  *      Author: fish
  */
 
-#include "varcontainer.hpp"
-#include "LogClass.hpp"
+#include "iHanClient/varcontainer.hpp"
+#include "iHanClient/LogClass.hpp"
 #include "win32_support.hpp"
 
 

@@ -24,8 +24,8 @@
  *  @brief
  */
 
-#include "ZBLocations.hpp"
-#include "ZBHAProfiles.hpp"
+#include "iHanClient/ZBLocations.hpp"
+#include "iHanClient/ZBHAProfiles.hpp"
 
 const char LocationStrings[][0x48] = {
 		{ LOC_ATRIUM_TXT },

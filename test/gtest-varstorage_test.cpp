@@ -23,8 +23,8 @@
 #include <boost/utility.hpp>
 #include "sp_collector.cpp"
 #endif
-#include "varcontainer.hpp"
-#include "LogClass.hpp"
+#include "iHanClient/varcontainer.hpp"
+#include "iHanClient/LogClass.hpp"
 #include "../src/varcontainer.cpp"
 
 
