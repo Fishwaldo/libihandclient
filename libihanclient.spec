@@ -11,7 +11,7 @@ License: LGPL2+
 Version: 0.2.1381591635
 Release: 0
 BuildRequires: gcc-c++ make boost-devel pkgconfig automake libtool
-Source0: libihanclient-0.2.tar.gz
+Source0: libihanclient-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-root
 
