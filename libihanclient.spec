@@ -23,6 +23,7 @@ developers to write iHan applications
 Summary: Intelegent Home Automation Network Client Library
 Group: Development/Libraries/C and C++
 Requires: %{name} = %{version}-%{release}
+Requires: boost-devel
 #BuildRequires: %{name}
 
 %description -n %{name}-devel

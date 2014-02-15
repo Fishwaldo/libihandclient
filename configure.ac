@@ -95,6 +95,6 @@ fi
 AC_SUBST([CONFIGURE_ARGS], $ac_configure_args)
 
 AC_CONFIG_FILES([Makefile muscle/Makefile include/Makefile src/Makefile libihanclient.pc test/Makefile])
-AC_CONFIG_FILES([libihanclient.spec libihanclient.dsc debian/libihanclient-dev.dirs debian/libihanclient-dev.install debian/files])
+AC_CONFIG_FILES([libihanclient.spec libihanclient.dsc debian/libihanclient-dev.dirs debian/libihanclient-dev.install])
 AC_CACHE_SAVE
 AC_OUTPUT
