@@ -32,7 +32,7 @@
 #include <string>
 #include <boost/format.hpp>
 
-namespace iHanDClient {
+namespace iHanClient {
 	namespace Logging {
 
 		enum LogLevel
@@ -152,27 +152,27 @@ namespace iHanDClient {
 		 * \relates LogClass
 		 * Log a Message at LogDebug Level
 		 */
-#define LogDebug(Y)   Log::Write(iHanDClient::Logging::LogLevel_Debug, LogFormat(Y))
+#define LogDebug(Y)   Log::Write(iHanClient::Logging::LogLevel_Debug, LogFormat(Y))
 		/*! \def LogInfo()
 		 * \relates LogClass
 		 * Log a Message at LogInfo level
 		 */
-#define LogInfo(Y) Log::Write(iHanDClient::Logging::LogLevel_Info, LogFormat(Y))
+#define LogInfo(Y) Log::Write(iHanClient::Logging::LogLevel_Info, LogFormat(Y))
 		/*! \def LogWarn()
 		 * \relates LogClass
 		 * Log a Message at the Warn Level
 		 */
-#define LogWarn(Y)  Log::Write(iHanDClient::Logging::LogLevel_Warning, LogFormat(Y))
+#define LogWarn(Y)  Log::Write(iHanClient::Logging::LogLevel_Warning, LogFormat(Y))
 		/*! \def LogError()
 		 * \relates LogClass
 		 * Log a Message at the LogError Level
 		 */
-#define LogError(Y) Log::Write(iHanDClient::Logging::LogLevel_Error, LogFormat(Y))
+#define LogError(Y) Log::Write(iHanClient::Logging::LogLevel_Error, LogFormat(Y))
 		/*! \def LogFatal()
 		 * Log a Message at the LogFatal Level
 		 * \relates LogClass
 		 */
-#define LogFatal(Y) Log::Write(iHanDClient::Logging::LogLevel_Fatal, LogFormat(Y))
+#define LogFatal(Y) Log::Write(iHanClient::Logging::LogLevel_Fatal, LogFormat(Y))
 
 	}
 }

@@ -23,8 +23,8 @@
 #include <boost/utility.hpp>
 #include "sp_collector.cpp"
 #endif
-#include "varcontainer.hpp"
-#include "LogClass.hpp"
+#include "iHanClient/varcontainer.hpp"
+#include "iHanClient/LogClass.hpp"
 #include "../src/varcontainer.cpp"
 
 
@@ -35,7 +35,7 @@ namespace testing {
 				protected:
 				     virtual void SetUp() {
 						 //this->Vars &= new VarStorage();
-						 iHanDClient::Logging::Log::Create("", true, iHanDClient::Logging::LogLevel_Debug);
+						 iHanClient::Logging::Log::Create("", true, iHanClient::Logging::LogLevel_Debug);
 						 this->Vars.reset(new VarStorage_t());
 						 this->Vars->addIntValue("INT", (int)123);
 						 this->Vars->addStringValue("STRING", (std::string)"String");

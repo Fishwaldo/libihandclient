@@ -1,11 +1,11 @@
-#include "varcontainer.hpp"
-#include "LogClass.hpp"
+#include "iHanClient/varcontainer.hpp"
+#include "iHanClient/LogClass.hpp"
 
 
 
 int main(int argc, char *argv[]) {
-	iHanDClient::Logging::Log::Create("", true, iHanDClient::Logging::LogLevel_Debug);
-	iHanDClient::Logging::LogInfo("Starting Demo");
+	iHanClient::Logging::Log::Create("", true, iHanClient::Logging::LogLevel_Debug);
+	iHanClient::Logging::LogInfo("Starting Demo");
 	VarStorage Vars;
 	Vars.reset(new VarStorage_t());
 	Vars->addIntValue("INT", (int)123);
@@ -28,5 +28,5 @@ int main(int argc, char *argv[]) {
 	Vars->addVarStorageValue("VARSTORAGE", newVar);
 	cout << *(Vars);
 //	iHanDClient::Logging::LogInfo( *(Vars.get()));
-	iHanDClient::Logging::LogInfo("Finished Debug");
+	iHanClient::Logging::LogInfo("Finished Debug");
 }

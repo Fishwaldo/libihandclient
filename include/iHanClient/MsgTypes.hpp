@@ -183,8 +183,6 @@ typedef enum VarType_t {
 #define MSGB_TO "MSBTO"
 #define MSGB_MSG_TYPE "MSGTYPE"
 #define MSGB_MSG_SUBTYPE "MSGSUBTYPE"
-/* XXX TODO: Get rid of this */
-#define SENSOR_DEVICEID MSGB_TO
 
 enum MSG_BUS_TYPES {
 	MSB_TYPE_CONTROL,

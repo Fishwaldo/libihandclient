@@ -28,11 +28,11 @@
 #include <stdio.h>
 #include <vector>
 #include <iostream>
-#include "LogClass.hpp"
+#include "iHanClient/LogClass.hpp"
 
 
 
-using namespace iHanDClient::Logging;
+using namespace iHanClient::Logging;
 
 
 inline std::string getLevelString(LogLevel lvl) {

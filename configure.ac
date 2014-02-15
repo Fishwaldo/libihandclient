@@ -95,13 +95,6 @@ fi
 AC_SUBST([CONFIGURE_ARGS], $ac_configure_args)
 
 AC_CONFIG_FILES([Makefile muscle/Makefile include/Makefile src/Makefile libihanclient.pc test/Makefile])
+AC_CONFIG_FILES([libihanclient.spec libihanclient.dsc debian/libihanclient-dev.dirs debian/libihanclient-dev.install debian/files])
 AC_CACHE_SAVE
 AC_OUTPUT
-#AC_MSG_HEADER([Configuration complete.])
-if test ! -f .hush; then \
-	read -p "Press Enter key to read the release notes"; \
-	clear; \
-	more README; \
-	echo "Run 'make' (or 'gmake' on some systems) to compile libiHanClient."; \
-	echo "If you require support, see the README file."; \
-fi;

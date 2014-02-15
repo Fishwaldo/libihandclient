@@ -1,3 +1,2 @@
-ihanclientdir = $(includedir)/iHanClient/
-ihanclient_HEADERS = MsgTypes.hpp ZBLocations.hpp ZBHAProfiles.hpp DeviceTypes.hpp varcontainer.hpp LogClass.hpp
+nobase_include_HEADERS = iHanClient/MsgTypes.hpp iHanClient/ZBLocations.hpp iHanClient/ZBHAProfiles.hpp iHanClient/DeviceTypes.hpp iHanClient/varcontainer.hpp iHanClient/LogClass.hpp
 noinst_HEADERS  = win32_support.hpp
