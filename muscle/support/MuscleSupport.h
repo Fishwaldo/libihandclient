@@ -50,6 +50,12 @@
 # endif
 #endif
 
+# if defined(MUSCLE_64_BIT_PLATFORM) || defined(__osf__) || defined(__amd64__) || defined(__PPC64__) || defined(__x86_64__) || defined(_M_AMD64) /* some 64bit systems will have long=64-bit, int=32-bit */
+# ifndef MUSCLE_64_BIT_PLATFORM
+# define MUSCLE_64_BIT_PLATFORM 1 // auto-define it if it wasn't defined in the Makefile
+# endif 
+#endif
+
 /* If we are in an environment where known assembly is available, make a note of that fact */
 #ifndef MUSCLE_AVOID_INLINE_ASSEMBLY
 # if defined(__GNUC__)
