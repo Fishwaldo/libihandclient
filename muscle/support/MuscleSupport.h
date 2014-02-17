@@ -195,44 +195,25 @@ typedef void * muscleVoidPointer;  /* it's a bit easier, syntax-wise, to use thi
     typedef unsigned char           uint8;
     typedef short                   int16;
     typedef unsigned short          uint16;
-#   if defined(MUSCLE_64_BIT_PLATFORM) || defined(__osf__) || defined(__amd64__) || defined(__PPC64__) || defined(__x86_64__) || defined(_M_AMD64)   /* some 64bit systems will have long=64-bit, int=32-bit */
-#    ifndef MUSCLE_64_BIT_PLATFORM
-#     define MUSCLE_64_BIT_PLATFORM 1  // auto-define it if it wasn't defined in the Makefile
-#    endif
-     typedef int                    int32;
-#    ifndef _UINT32   // Avoid conflict with typedef in OS/X Leopard system header
-      typedef unsigned int           uint32;
-#     define _UINT32  // Avoid conflict with typedef in OS/X Leopard system header
-#    endif
-#   else
-     typedef long                   int32;
-#    ifndef _UINT32   // Avoid conflict with typedef in OS/X Leopard system header
-      typedef unsigned long          uint32;
-#     define _UINT32  // Avoid conflict with typedef in OS/X Leopard system header
-#    endif
-#   endif
-#   if defined(WIN32) && !defined(__GNUWIN32__)
-     typedef __int64                int64;
-     typedef unsigned __int64       uint64;
-#   elif __APPLE__
-#    ifndef _UINT64  // Avoid conflict with typedef in OS/X Leopard system header
-#     define _UINT64
-      typedef long long              int64;   // these are what's expected in MacOS/X land, in both
-      typedef unsigned long long     uint64;  // 32-bit and 64-bit flavors.  C'est la vie, non?
-#    endif
-#   elif defined(MUSCLE_64_BIT_PLATFORM)
-     typedef long long                   int64;
-     typedef unsigned long long          uint64;
-#   else
-     typedef long long              int64;
-     typedef unsigned long long     uint64;
-#   endif
-    typedef int32                     status_t;
+    typedef int                     int32;
+    typedef unsigned int            uint32;
+    typedef long long               int64;
+    typedef unsigned long long      uint64;
+    typedef int32                   status_t;
 #  endif  /* !MUSCLE_TYPES_PREDEFINED */
 # endif  /* !__ATHEOS__*/
 #endif  /* __BEOS__ || __HAIKU__ */
 
 /** Ugly platform-neutral macros for problematic sprintf()-format-strings */
+# define  INT32_FORMAT_SPEC_NOPERCENT "i"
+# define UINT32_FORMAT_SPEC_NOPERCENT "u"
+# define XINT32_FORMAT_SPEC_NOPERCENT "x"
+#  define  INT64_FORMAT_SPEC_NOPERCENT "lli"
+#  define UINT64_FORMAT_SPEC_NOPERCENT "llu"
+#  define XINT64_FORMAT_SPEC_NOPERCENT "llx"
+
+
+#if 0
 #if defined(MUSCLE_64_BIT_PLATFORM)
 # define  INT32_FORMAT_SPEC_NOPERCENT "i"
 # define UINT32_FORMAT_SPEC_NOPERCENT "u"
@@ -264,7 +245,7 @@ typedef void * muscleVoidPointer;  /* it's a bit easier, syntax-wise, to use thi
 #  define XINT64_FORMAT_SPEC_NOPERCENT "llx"
 # endif
 #endif
-
+#endif
 # define  INT32_FORMAT_SPEC "%"  INT32_FORMAT_SPEC_NOPERCENT
 # define UINT32_FORMAT_SPEC "%" UINT32_FORMAT_SPEC_NOPERCENT
 # define XINT32_FORMAT_SPEC "%" XINT32_FORMAT_SPEC_NOPERCENT
@@ -751,6 +732,9 @@ static inline void MakePrettyTypeCodeString(uint32 typecode, char *buf)
 # include <winsock2.h>  // this will bring in windows.h for us
 #endif
 
+typedef uint64 uintptr;
+typedef int64 ptrdiff;
+#if 0
 #ifdef _MSC_VER
 typedef UINT_PTR uintptr;   // Use these under MSVC so that the compiler
 typedef INT_PTR  ptrdiff;   // doesn't give spurious warnings in /Wp64 mode
@@ -762,6 +746,7 @@ typedef int64 ptrdiff;
 typedef uint32 uintptr;
 typedef int32 ptrdiff;
 # endif
+#endif
 #endif
 
 #ifdef __cplusplus
