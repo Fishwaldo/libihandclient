@@ -55,14 +55,31 @@ namespace testing {
 						 VarStorage newVar(new VarStorage_t());
 						 newVar->addIntValue("INT", (int)123);
 						 this->Vars->addVarStorageValue("VARSTORAGE", newVar);
-					 }
+
+						 /* test Array Handling */
+						 this->Vars->addIntValue("MULTIINT", (int)456);
+						 this->Vars->addIntValue("MULTIINT", (int)789);
+						 this->Vars->addStringValue("MULTISTRING", (std::string)"String1");
+						 this->Vars->addStringValue("MULTISTRING", (std::string)"String2");
+						 this->Vars->addLongValue("MULTILONG", (long)112233);
+						 this->Vars->addLongValue("MULTILONG", (long)223344);
+						 this->Vars->addLongLongValue("MULTILONGLONG", (long long)33445566);
+						 this->Vars->addLongLongValue("MULTILONGLONG", (long long)77889900);
+						 this->Vars->addFloatValue("MULTIFLOAT", (float)3.45);
+						 this->Vars->addFloatValue("MULTIFLOAT", (float)6.78);
+						 this->Vars->addBoolValue("MULTIBOOL", (bool)true);
+						 this->Vars->addBoolValue("MULTIBOOL", (bool)true);
+						 this->Vars->addTimeValue("MULTIDATE", boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")));
+						 this->Vars->addTimeValue("MULTIDATE", boost::posix_time::ptime(boost::posix_time::time_from_string("2011-02-28 11:33:43")));
+
+				     }
 
 				VarStorage Vars;
 			};
 
 
 			TEST_F(VarContainerTest, ReturnsTrueForCountItems) {
-				EXPECT_TRUE(Vars->getSize() == 9);
+				EXPECT_EQ(Vars->getSize(), 16);
 			}
 
 			TEST_F(VarContainerTest, CheckIntContents) {
@@ -282,7 +299,7 @@ namespace testing {
 				boost::archive::xml_iarchive ia(ifs);
 				ia >> BOOST_SERIALIZATION_NVP(newVars);
 				ifs.close();
-				EXPECT_TRUE(newVars->getSize() == 9);
+				EXPECT_EQ(newVars->getSize(),16);
 				int i;
 				newVars->getIntValue("INT", i);
 				EXPECT_EQ(123,i);
@@ -304,10 +321,94 @@ namespace testing {
 				boost::posix_time::ptime n;
 				newVars->getTimeValue("DATE", n);
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")), n);
+				Vars->getIntValue("MULTIINT", i, 0);
+				EXPECT_EQ(456,i);
+				Vars->getIntValue("MULTIINT", i, 1);
+				EXPECT_EQ(789,i);
+				Vars->getStringValue("MULTISTRING", val, 0);
+				EXPECT_STREQ("String1", val.c_str());
+				Vars->getStringValue("MULTISTRING", val, 1);
+				EXPECT_STREQ("String2", val.c_str());
+				Vars->getLongValue("MULTILONG", j, 0);
+				EXPECT_EQ((long)112233, j);
+				Vars->getLongValue("MULTILONG", j, 1);
+				EXPECT_EQ((long)223344, j);
+				Vars->getLongLongValue("MULTILONGLONG", k, 0);
+				EXPECT_EQ((long long)33445566, k);
+				Vars->getLongLongValue("MULTILONGLONG", k, 1);
+				EXPECT_EQ((long long)77889900, k);
+				Vars->getFloatValue("MULTIFLOAT", l, 0);
+				EXPECT_FLOAT_EQ((float)3.45, l);
+				Vars->getFloatValue("MULTIFLOAT", l, 1);
+				EXPECT_FLOAT_EQ((float)6.78, l);
+				Vars->getBoolValue("MULTIBOOL", m, 0);
+				EXPECT_EQ(true, m);
+				Vars->getBoolValue("MULTIBOOL", m, 1);
+				EXPECT_EQ(true, m);
+				Vars->getTimeValue("MULTIDATE", n, 0);
+				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")), n);
+				Vars->getTimeValue("MULTIDATE", n, 1);
+				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2011-02-28 11:33:43")), n);
+
 				std::remove(filename.c_str());
 #if 0
 				find_unreachable_objects();
 #endif
+			}
+			TEST_F(VarContainerTest, CheckMultiIntContents) {
+				int i;
+				Vars->getIntValue("MULTIINT", i, 0);
+				EXPECT_EQ(456,i);
+				Vars->getIntValue("MULTIINT", i, 1);
+				EXPECT_EQ(789,i);
+
+			}
+			TEST_F(VarContainerTest, CheckMultiStringContents) {
+				std::string val;
+				Vars->getStringValue("MULTISTRING", val, 0);
+				EXPECT_STREQ("String1", val.c_str());
+				Vars->getStringValue("MULTISTRING", val, 1);
+				EXPECT_STREQ("String2", val.c_str());
+			}
+			TEST_F(VarContainerTest, CheckMultiLongContents) {
+				long i;
+				Vars->getLongValue("MULTILONG", i, 0);
+				EXPECT_EQ((long)112233, i);
+				Vars->getLongValue("MULTILONG", i, 1);
+				EXPECT_EQ((long)223344, i);
+
+			}
+			TEST_F(VarContainerTest, CheckMultiLongLongContents) {
+				long long i;
+				Vars->getLongLongValue("MULTILONGLONG", i, 0);
+				EXPECT_EQ((long long)33445566, i);
+				Vars->getLongLongValue("MULTILONGLONG", i, 1);
+				EXPECT_EQ((long long)77889900, i);
+
+			}
+			TEST_F(VarContainerTest, CheckMultiFloatContents) {
+				float i;
+				Vars->getFloatValue("MULTIFLOAT", i, 0);
+				EXPECT_FLOAT_EQ((float)3.45, i);
+				Vars->getFloatValue("MULTIFLOAT", i, 1);
+				EXPECT_FLOAT_EQ((float)6.78, i);
+
+			}
+			TEST_F(VarContainerTest, CheckMultiBoolContents) {
+				bool i;
+				Vars->getBoolValue("MULTIBOOL", i, 0);
+				EXPECT_EQ(true, i);
+				Vars->getBoolValue("MULTIBOOL", i, 1);
+				EXPECT_EQ(true, i);
+
+			}
+			TEST_F(VarContainerTest, CheckMultiDateContents) {
+				boost::posix_time::ptime i;
+				Vars->getTimeValue("MULTIDATE", i, 0);
+				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")), i);
+				Vars->getTimeValue("MULTIDATE", i, 1);
+				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2011-02-28 11:33:43")), i);
+
 			}
 
 
