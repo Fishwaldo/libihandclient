@@ -13,6 +13,7 @@
 typedef enum VSErrorType_t {
 	EMPTY_RESULT,
 	NULL_RESULT,
+	OUT_OF_RANGE,
 	UNKNOWN_ERROR
 } VSErrorType_t;
 
@@ -274,7 +275,7 @@ int VarStorage_t::addVarStorageValue(std::string FieldName, VarStorage &val) {
 	SV->StoredType = ST_VARSTORAGE;
 	return this->addValueP(FieldName, SV);
 }
-int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos) {
+int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, uint8_t pos) {
 	Vals *storedval;
 	if (this->Variables.find(FieldName) != this->Variables.end()) {
 		if (this->Variables[FieldName]->front()->StoredType == SV->StoredType) {
@@ -288,10 +289,11 @@ int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos)
 		/* Doesn't exist, add it at the start */
 		return this->addValueP(FieldName, SV);
 	}
-	if ((unsigned int)pos > storedval->size()) {
-		iHanClient::Logging::LogError(std::string("Filedname size " + FieldName + "Is smaller than " + lexical_cast<std::string>(pos)));
+	if ((unsigned int)pos >= storedval->size()) {
+		iHanClient::Logging::LogInfo(std::string("Fieldname size " + FieldName + "Is smaller than " + lexical_cast<std::string>(pos)));
+		storedval->push_back(SV);
 		//delete SV;
-		return -1;
+		return pos;
 	}
 	/* XXX TODO: Check this correctly cleans up the old StoredVal */
 	//storedval->delete(pos);
@@ -299,58 +301,58 @@ int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos)
 	return pos;
 }
 
-int VarStorage_t::replaceCharValue(std::string FieldName, char *val, int pos) {
+int VarStorage_t::replaceCharValue(std::string FieldName, char *val, uint8_t pos) {
 	return this->replaceStringValue(FieldName, std::string(val), pos);
 }
-int VarStorage_t::replaceStringValue(std::string FieldName, std::string val, int pos) {
+int VarStorage_t::replaceStringValue(std::string FieldName, std::string val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->StrVal = val;
 	SV->StoredType = ST_STRING;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceIntValue(std::string FieldName, int val, int pos) {
+int VarStorage_t::replaceIntValue(std::string FieldName, int val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->IntVal = val;
 	SV->StoredType = ST_INT;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceLongValue(std::string FieldName, long val, int pos) {
+int VarStorage_t::replaceLongValue(std::string FieldName, long val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->LongVal = val;
 	SV->StoredType = ST_LONG;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceLongLongValue(std::string FieldName, long long val, int pos) {
+int VarStorage_t::replaceLongLongValue(std::string FieldName, long long val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->LongLongVal = val;
 	SV->StoredType = ST_LONGLONG;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceFloatValue(std::string FieldName, float val, int pos) {
+int VarStorage_t::replaceFloatValue(std::string FieldName, float val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->FloatVal = val;
 	SV->StoredType = ST_FLOAT;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceHashValue(std::string FieldName, HashVals val, int pos) {
+int VarStorage_t::replaceHashValue(std::string FieldName, HashVals val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->HashVal = val;
 	SV->StoredType = ST_HASH;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceBoolValue(std::string FieldName, bool val, int pos) {
+int VarStorage_t::replaceBoolValue(std::string FieldName, bool val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->BoolVal = val;
 	SV->StoredType = ST_BOOL;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceTimeValue(std::string FieldName, boost::posix_time::ptime val, int pos) {
+int VarStorage_t::replaceTimeValue(std::string FieldName, boost::posix_time::ptime val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->DateTimeVal = val;
 	SV->StoredType = ST_DATETIME;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceVarStorageValue(std::string FieldName, VarStorage &val, int pos) {
+int VarStorage_t::replaceVarStorageValue(std::string FieldName, VarStorage &val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->VarVal = val;
 	SV->StoredType = ST_VARSTORAGE;
@@ -365,9 +367,13 @@ StoredType_t VarStorage_t::getType(std::string FieldName) {
 	return ST_INVALID;
 }
 
-StoredVals_t VarStorage_t::getValueP(std::string FieldName, StoredType_t type, int pos) {
+StoredVals_t VarStorage_t::getValueP(std::string FieldName, StoredType_t type, uint8_t pos) {
 	if (this->Variables.find(FieldName) != this->Variables.end()) {
 		Vals *storedval = this->Variables[FieldName];
+		if (storedval->size() <= pos) {
+			iHanClient::Logging::LogError(std::string("Field " + FieldName + " only has " + lexical_cast<std::string>(storedval->size()) + " but " + lexical_cast<std::string>(pos) + " was asked for"));
+			BOOST_THROW_EXCEPTION(VS_Exception(OUT_OF_RANGE));
+		}
 		StoredVals_t SV = storedval->at(pos);
 		if (SV->StoredType != type) {
 			iHanClient::Logging::LogError(std::string("Field " + FieldName + " is not of type " + getType(type) + " (" + lexical_cast<std::string>(type) + ") but type " + getType(SV) + " (" + lexical_cast<std::string>(SV->StoredType) + ")"));
@@ -378,7 +384,7 @@ StoredVals_t VarStorage_t::getValueP(std::string FieldName, StoredType_t type, i
 	BOOST_THROW_EXCEPTION(VS_Exception(EMPTY_RESULT));
 }
 
-bool VarStorage_t::getCharValue(std::string FieldName, char *value, int pos) {
+bool VarStorage_t::getCharValue(std::string FieldName, char *value, uint8_t pos) {
 	std::string Result;
 	if (this->getStringValue(FieldName, Result, pos) == true) {
 		value = (char *)Result.c_str();
@@ -387,7 +393,7 @@ bool VarStorage_t::getCharValue(std::string FieldName, char *value, int pos) {
 	return false;
 }
 
-bool VarStorage_t::getStringValue(std::string FieldName, std::string &value, int pos) {
+bool VarStorage_t::getStringValue(std::string FieldName, std::string &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_STRING, pos);
@@ -397,7 +403,7 @@ bool VarStorage_t::getStringValue(std::string FieldName, std::string &value, int
 		return false;
 	}
 }
-bool VarStorage_t::getIntValue(std::string FieldName, int &value, int pos) {
+bool VarStorage_t::getIntValue(std::string FieldName, int &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_INT, pos);
@@ -407,7 +413,7 @@ bool VarStorage_t::getIntValue(std::string FieldName, int &value, int pos) {
 		return false;
 	}
 }
-bool VarStorage_t::getLongValue(std::string FieldName, long &value, int pos) {
+bool VarStorage_t::getLongValue(std::string FieldName, long &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_LONG, pos);
@@ -417,7 +423,7 @@ bool VarStorage_t::getLongValue(std::string FieldName, long &value, int pos) {
 		return false;
 	}
 }
-bool VarStorage_t::getLongLongValue(std::string FieldName, long long &value, int pos) {
+bool VarStorage_t::getLongLongValue(std::string FieldName, long long &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_LONGLONG, pos);
@@ -427,7 +433,7 @@ bool VarStorage_t::getLongLongValue(std::string FieldName, long long &value, int
 		return false;
 	}
 }
-bool VarStorage_t::getFloatValue(std::string FieldName, float &value, int pos) {
+bool VarStorage_t::getFloatValue(std::string FieldName, float &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_FLOAT, pos);
@@ -437,7 +443,7 @@ bool VarStorage_t::getFloatValue(std::string FieldName, float &value, int pos) {
 		return false;
 	}
 }
-bool VarStorage_t::getHashValue(std::string FieldName, HashVals &value, int pos) {
+bool VarStorage_t::getHashValue(std::string FieldName, HashVals &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_HASH, pos);
@@ -447,7 +453,7 @@ bool VarStorage_t::getHashValue(std::string FieldName, HashVals &value, int pos)
 		return false;
 	}
 }
-bool VarStorage_t::getBoolValue(std::string FieldName, bool &value, int pos) {
+bool VarStorage_t::getBoolValue(std::string FieldName, bool &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_BOOL, pos);
@@ -457,7 +463,7 @@ bool VarStorage_t::getBoolValue(std::string FieldName, bool &value, int pos) {
 		return false;
 	}
 }
-bool VarStorage_t::getTimeValue(std::string FieldName, boost::posix_time::ptime &value, int pos) {
+bool VarStorage_t::getTimeValue(std::string FieldName, boost::posix_time::ptime &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName,  ST_DATETIME, pos);
@@ -467,7 +473,7 @@ bool VarStorage_t::getTimeValue(std::string FieldName, boost::posix_time::ptime 
 		return false;
 	}
 }
-bool VarStorage_t::getVarStorageValue(std::string FieldName, VarStorage &value, int pos) {
+bool VarStorage_t::getVarStorageValue(std::string FieldName, VarStorage &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_VARSTORAGE, pos);
