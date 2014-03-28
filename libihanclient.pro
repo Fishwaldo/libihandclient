@@ -6,9 +6,9 @@
 
 QT       -= core gui
 
-TARGET = libihanclient
+TARGET = ihanclient
 TEMPLATE = lib
-CONFIG += lib_bundle c++11
+CONFIG += lib_bundle c++11 staticlib
 
 SOURCES += src/LogClass.cpp \
     src/varcontainer.cpp \
@@ -79,6 +79,7 @@ HEADERS += include/iHanClient/DeviceTypes.hpp \
 unix {
     target.path = /usr/lib
     INSTALLS += target
+    LIBS += -lboost_date_time-mt -lboost_serialization-mt
 }
 
 DEFINES += MUSCLE_SINGLE_THREAD_ONLY
