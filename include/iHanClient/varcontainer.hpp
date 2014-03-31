@@ -88,6 +88,7 @@ class VarStorage_t {
 public:
 	VarStorage_t();
 	VarStorage_t(muscle::MessageRef msg);
+	VarStorage_t(VarStorage_t  &other);
 	~VarStorage_t();
 	void operator()(muscle::MessageRef msg);
 	int addCharValue(std::string FieldName, char *);
@@ -142,6 +143,7 @@ private:
 };
 
 #define VarContainerFactory(x) VarStorage x(new VarStorage_t());
+#define VarContainerCopy(x, y) VarStorage x(new VarStorage_t(*y.get()));
 
 std::ostream& operator<<(std::ostream&, const VarStorage_t &);
 std::ostream& operator<<(std::ostream &os, const VarStorage &ptr);

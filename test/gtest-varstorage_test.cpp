@@ -157,7 +157,7 @@ namespace testing {
 				EXPECT_TRUE(Vars->addBoolValue("BOOL", i)) << "Adding Bool Value Failed";
 				bool j;
 				EXPECT_TRUE(Vars->getBoolValue("BOOL", j, 1)) << "Getting 2nd Bool Value Failed";
-				EXPECT_EQ(false, j) << "Bool Value Didn't Match";
+				EXPECT_FALSE(j) << "Bool Value Didn't Match";
 			}
 			TEST_F(VarContainerTest, AddDateValueAndCheck) {
 				boost::posix_time::ptime i(boost::posix_time::time_from_string("2011-04-12 18:54:34"));
@@ -267,6 +267,66 @@ namespace testing {
 				std::string value;
 				EXPECT_TRUE(getVar->getStringValue("STRING", value));
 				EXPECT_EQ("NewVar", value);
+			}
+			TEST_F(VarContainerTest, CopyConstructor) {
+				 VarContainerCopy(newvals, this->Vars);
+				 this->Vars->addIntValue("INT", (int)123);
+				 {
+					 int oldval, newval;
+					 EXPECT_TRUE(this->Vars->getIntValue("INT", oldval));
+					 EXPECT_TRUE(newvals->getIntValue("INT", newval));
+					 EXPECT_EQ(oldval, newval);
+				 }
+				 {
+					 long oldval, newval;
+					 EXPECT_TRUE(this->Vars->getLongValue("LONG", oldval));
+					 EXPECT_TRUE(newvals->getLongValue("LONG", newval));
+					 EXPECT_EQ(oldval, newval);
+				 }
+				 {
+					 long long oldval, newval;
+					 EXPECT_TRUE(this->Vars->getLongLongValue("LONGLONG", oldval));
+					 EXPECT_TRUE(newvals->getLongLongValue("LONGLONG", newval));
+					 EXPECT_EQ(oldval, newval);
+				 }
+				 {
+					 float oldval, newval;
+					 EXPECT_TRUE(this->Vars->getFloatValue("FLOAT", oldval));
+					 EXPECT_TRUE(newvals->getFloatValue("FLOAT", newval));
+					 EXPECT_FLOAT_EQ(oldval, newval);
+				 }
+				 {
+					 bool oldval, newval;
+					 EXPECT_TRUE(this->Vars->getBoolValue("BOOL", oldval));
+					 EXPECT_TRUE(newvals->getBoolValue("BOOL", newval));
+					 EXPECT_FLOAT_EQ(oldval, newval);
+				 }
+				 {
+					 boost::posix_time::ptime oldval, newval;
+					 EXPECT_TRUE(this->Vars->getTimeValue("DATE", oldval));
+					 EXPECT_TRUE(newvals->getTimeValue("DATE", newval));
+					 EXPECT_EQ(oldval, newval);
+				 }
+				 {
+					 HashVals oldval, newval;
+					 EXPECT_TRUE(this->Vars->getHashValue("HASH", oldval));
+					 EXPECT_TRUE(newvals->getHashValue("HASH", newval));
+					 EXPECT_EQ(oldval["STRING"], newval["STRING"]);
+					 EXPECT_EQ(oldval["INT"], newval["INT"]);
+					 EXPECT_EQ(oldval["LONG"], newval["LONG"]);
+					 EXPECT_EQ(oldval["LONGLONG"], newval["LONGLONG"]);
+					 EXPECT_EQ(oldval["TIME"], newval["TIME"]);
+				 }
+				 {
+					 VarStorage oldval, newval;
+					 EXPECT_TRUE(this->Vars->getVarStorageValue("VARSTORAGE", oldval));
+					 EXPECT_TRUE(newvals->getVarStorageValue("VARSTORAGE", newval));
+					 int oldint, newint;
+					 EXPECT_TRUE(oldval->getIntValue("INT", oldint));
+					 EXPECT_TRUE(newval->getIntValue("INT", newint));
+					 EXPECT_EQ(oldint, newint);
+
+				 }
 			}
 			TEST_F(VarContainerTest, Serialize) {
 				VarStorage newVars(new VarStorage_t());

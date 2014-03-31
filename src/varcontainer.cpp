@@ -30,6 +30,8 @@ private:
   VSErrorType_t ErrorType;
 };
 
+
+
 VarStorage_t::VarStorage_t() {
 }
 
@@ -39,6 +41,26 @@ VarStorage_t::VarStorage_t(muscle::MessageRef msg) {
 void VarStorage_t::operator()(muscle::MessageRef msg) {
 	this->importMuscleMsg(msg);
 }
+
+VarStorage_t::VarStorage_t(VarStorage_t  &other) {
+	std::map<std::string, Vals *>::iterator it;
+	std::vector<StoredVals_t>::iterator it2;
+	for (it=other.Variables.begin(); it != other.Variables.end(); it++) {
+		Vals *myval = (it->second);
+		Vals *newvals = new Vals;
+		for (it2 = myval->begin(); it2 != myval->end(); it2++) {
+			StoredVals_t actualval = *it2;
+			StoredVals_r *othervals = actualval.get();
+			StoredVals_r *values = new StoredVals_r(*othervals);
+			//printf("old: %p new: %p\n", othervals, values);
+			StoredVals_t NewVal(values);
+			newvals->push_back(NewVal);
+		}
+		std::string name = it->first;
+		this->Variables[name] = newvals;
+	}
+}
+
 void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 	muscle::String fieldname;
 	uint32 type, size, i;
@@ -288,13 +310,12 @@ int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, int pos)
 		/* Doesn't exist, add it at the start */
 		return this->addValueP(FieldName, SV);
 	}
-	if ((unsigned int)pos > storedval->size()) {
-		iHanClient::Logging::LogError(std::string("Filedname size " + FieldName + "Is smaller than " + lexical_cast<std::string>(pos)));
-		//delete SV;
-		return -1;
+	/* XXX TODO: Check we not tring to make a hole */
+	if ((unsigned int)pos >= storedval->size()) {
+		storedval->push_back(SV);
+		return pos;
 	}
-	/* XXX TODO: Check this correctly cleans up the old StoredVal */
-	//storedval->delete(pos);
+
 	storedval->at(pos) = SV;
 	return pos;
 }
