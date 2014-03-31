@@ -43,9 +43,9 @@ void VarStorage_t::operator()(muscle::MessageRef msg) {
 	this->importMuscleMsg(msg);
 }
 
-VarStorage_t::VarStorage_t(VarStorage_t  &other) {
-	std::map<std::string, Vals *>::iterator it;
-	std::vector<StoredVals_t>::iterator it2;
+VarStorage_t::VarStorage_t(VarStorage_t  const &other) {
+	std::map<std::string, Vals *>::const_iterator it;
+	std::vector<StoredVals_t>::const_iterator it2;
 	for (it=other.Variables.begin(); it != other.Variables.end(); it++) {
 		Vals *myval = (it->second);
 		Vals *newvals = new Vals;

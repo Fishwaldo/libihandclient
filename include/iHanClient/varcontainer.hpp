@@ -88,7 +88,7 @@ class VarStorage_t {
 public:
 	VarStorage_t();
 	VarStorage_t(muscle::MessageRef msg);
-	VarStorage_t(VarStorage_t  &other);
+	VarStorage_t(VarStorage_t  const &other);
 	~VarStorage_t();
 	void operator()(muscle::MessageRef msg);
 	int addCharValue(std::string FieldName, char *);
