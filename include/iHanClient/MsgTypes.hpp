@@ -154,7 +154,8 @@ typedef enum t_ConfigType {
 				TC_IPADDR,
 				TC_BOOL,
 				TC_HASH,
-				TC_DATETIME
+				TC_DATETIME,
+				TC_VARSTORAGE
 } t_ConfigType;
 
 /* CFGD_TYPE field types */

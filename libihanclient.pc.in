@@ -8,4 +8,4 @@ Description: Client Library for intelligent home automation network
 URL: http://www.dynam.ac/
 Version: @VERSION@
 Libs: -L${libdir} -lihanclient
-Cflags: -DMUSCLE_SINGLE_THREAD_ONLY -I${includedir}/ -I${includedir}/muscle/
+Cflags: -DMUSCLE_SINGLE_THREAD_ONLY -I${includedir}/muscle/ -I${includedir}/iHanClient/

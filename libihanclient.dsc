@@ -2,7 +2,7 @@ Format: 1.0
 Source: libihanclient
 Binary: libihanclient1, libihanclient1-dev
 Architecture: any
-Version: 0.2-1
+Version: 0.3-1
 Maintainer: Justin Hammond <justin@dynam.ac>
 Standards-Version: 3.9.3
 Build-Depends: debhelper (>= 8), libboost-dev, libtool, automake, autoconf, libboost-date-time-dev, pkg-config

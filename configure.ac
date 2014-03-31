@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)
-AC_INIT(libihanclient, 0.2)
+AC_INIT(libihanclient, 0.3)
 AC_CONFIG_AUX_DIR(autotools)
 AC_CONFIG_SRCDIR([src/varcontainer.cpp])
 AC_CONFIG_HEADER([include/config.h])
@@ -95,6 +95,6 @@ fi
 AC_SUBST([CONFIGURE_ARGS], $ac_configure_args)
 
 AC_CONFIG_FILES([Makefile muscle/Makefile include/Makefile src/Makefile libihanclient.pc test/Makefile])
-AC_CONFIG_FILES([libihanclient.spec libihanclient.dsc debian/libihanclient-dev.dirs debian/libihanclient-dev.install debian/files])
+AC_CONFIG_FILES([libihanclient.spec libihanclient.dsc debian/libihanclient-dev.dirs debian/libihanclient-dev.install])
 AC_CACHE_SAVE
 AC_OUTPUT
