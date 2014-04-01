@@ -127,7 +127,7 @@ MULN_DEVICE_CONFWRITE
 #define SRVCAP_ENDPT_CONFIG "EndPtConfig"
 #define SRVCAP_ENDPT_VARS_DESC "EndPtVarDesc"
 #define SRVCAP_ENDPT_VARS "EndPtVar"
-
+#define SRVCAP_ENDPT_DELETEARRAYENTRY "__DELARRAYENTRY"
 
 
 /* Config and Value Descriptors */
@@ -161,7 +161,8 @@ typedef enum t_ConfigType {
 /* CFGD_TYPE field types */
 typedef enum t_ConfigFlags {
 				TCF_NONE = 0x00,
-				TCF_READONLY = 0x01
+				TCF_READONLY = 0x01,
+				TCF_FIXEDSIZE = 0x02
 } t_ConfigFlags;
 
 /* CFGD_GROUP Field Enums */
