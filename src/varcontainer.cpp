@@ -516,6 +516,22 @@ unsigned int VarStorage_t::getSize() {
 	return this->Variables.size();
 }
 
+bool VarStorage_t::delValue(std::string FieldName, uint8_t pos) {
+	if (this->Variables.find(FieldName) == this->Variables.end()) {
+		return false;
+	}
+	Vals *storedval = this->Variables[FieldName];
+	if (storedval->size() <= pos) {
+		iHanClient::Logging::LogError(std::string("Field " + FieldName + " only has " + lexical_cast<std::string>(storedval->size()) + " but " + lexical_cast<std::string>(pos) + " was asked for"));
+		BOOST_THROW_EXCEPTION(VS_Exception(OUT_OF_RANGE));
+	}
+	storedval->erase(storedval->begin()+pos);
+	return true;
+}
+
+
+
+
 #define DOTAB for (int tabs = 0; tabs != tab; tabs++) cerr << "\t"
 
 

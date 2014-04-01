@@ -121,7 +121,7 @@ public:
 	bool getBoolValue(std::string FieldName, bool &value, uint8_t pos = 0);
 	bool getTimeValue(std::string FieldName, boost::posix_time::ptime &value, uint8_t pos = 0);
 	bool getVarStorageValue(std::string FieldName, VarStorage &value, uint8_t pos = 0);
-//	bool delValue(std::string FieldName, uint8_t pos = 0);
+	bool delValue(std::string FieldName, uint8_t pos = 0);
 	std::vector<std::string> *getFields();
 	unsigned int getSize(std::string FieldName);
 	unsigned int getSize();
