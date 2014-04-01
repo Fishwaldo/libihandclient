@@ -516,6 +516,12 @@ unsigned int VarStorage_t::getSize() {
 	return this->Variables.size();
 }
 
+bool VarStorage_t::delValue(std::string FieldName) {
+	for (unsigned int i = 0; i <= this->getSize(FieldName); i++)
+		this->delValue(FieldName, 0);
+	return true;
+}
+
 bool VarStorage_t::delValue(std::string FieldName, uint8_t pos) {
 	if (this->Variables.find(FieldName) == this->Variables.end()) {
 		return false;
@@ -526,6 +532,9 @@ bool VarStorage_t::delValue(std::string FieldName, uint8_t pos) {
 		BOOST_THROW_EXCEPTION(VS_Exception(OUT_OF_RANGE));
 	}
 	storedval->erase(storedval->begin()+pos);
+	/* If there are no more entries left - Delete it from Variables */
+	if (storedval->size() == 0)
+		this->Variables.erase(FieldName);
 	return true;
 }
 

@@ -479,6 +479,10 @@ namespace testing {
 				boost::posix_time::ptime i;
 				EXPECT_TRUE(newVars->getTimeValue("MULTIDATE", i, 0));
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2011-02-28 11:33:43")), i);
+				EXPECT_TRUE(newVars->delValue("MULTIDATE", 0));
+				EXPECT_EQ(newVars->getSize("MULTIBOOL"), 2);
+				EXPECT_TRUE(newVars->delValue("MULTIBOOL"));
+				EXPECT_EQ(newVars->getSize("MULTIBOOL"), 0);
 			}
 
 
