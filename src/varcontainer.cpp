@@ -783,3 +783,88 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 	}
 	return stream;
 }
+
+void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName) {
+	/* determine what type of field it was, and add it to the updatedfields var */
+	StoredType_t type = src->getType(fieldName);
+	switch (type) {
+		case ST_STRING: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				std::string value;
+				src->getStringValue(fieldName, value, i);
+				dst->replaceStringValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_INT: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				int value;
+				src->getIntValue(fieldName, value, i);
+				dst->replaceIntValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_LONG: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				long value;
+				src->getLongValue(fieldName, value, i);
+				dst->replaceLongValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_LONGLONG: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				long long value;
+				src->getLongLongValue(fieldName, value, i);
+				dst->replaceLongLongValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_FLOAT: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				float value;
+				src->getFloatValue(fieldName, value, i);
+				dst->replaceFloatValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_BOOL: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				bool value;
+				src->getBoolValue(fieldName, value, i);
+				dst->replaceBoolValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_HASH: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				HashVals value;
+				src->getHashValue(fieldName, value, i);
+				dst->replaceHashValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_DATETIME: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				boost::posix_time::ptime value;
+				src->getTimeValue(fieldName, value, i);
+				dst->replaceTimeValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_VARSTORAGE: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				VarStorage value;
+				src->getVarStorageValue(fieldName, value, i);
+				dst->replaceVarStorageValue(fieldName, value, i);
+			}
+		}
+		break;
+		case ST_INVALID:
+		break;
+	}
+
+}
+
+
+

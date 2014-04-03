@@ -152,6 +152,9 @@ template<class Archive> void VarStorage_t::serialize(Archive & ar, const unsigne
 	ar & boost::serialization::make_nvp("VarContainer", this->Variables);
 }
 
+void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName);
+
+
 #ifdef Q_OBJECT
 Q_DECLARE_METATYPE(VarStorage_t);
 //Q_DECLARE_METATYPE(VarStorage);
