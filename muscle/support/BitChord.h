@@ -3,7 +3,7 @@
 #ifndef MuscleBitChord_h
 #define MuscleBitChord_h
 
-#include "util/String.h"
+#include "util/MString.h"
 #include "support/MuscleSupport.h"
 
 namespace muscle {

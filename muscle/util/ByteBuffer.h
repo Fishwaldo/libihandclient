@@ -6,7 +6,7 @@
 #include "util/FlatCountable.h"
 #include "support/Point.h"
 #include "support/Rect.h"
-#include "util/String.h"
+#include "util/MString.h"
 
 namespace muscle {
 

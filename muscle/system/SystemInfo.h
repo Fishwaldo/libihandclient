@@ -3,7 +3,7 @@
 #ifndef MuscleSystemInfos_h
 #define MuscleSystemInfos_h
 
-#include "util/String.h"
+#include "util/MString.h"
 
 namespace muscle {
 

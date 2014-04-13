@@ -7,7 +7,7 @@
 #include "util/CountedObject.h"
 #include "util/Queue.h"
 #include "util/Socket.h"
-#include "util/String.h"
+#include "util/MString.h"
 #include "util/TimeUtilityFunctions.h"
 
 // These includes are here so that people can use select() without having to #include the proper

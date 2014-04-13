@@ -7,7 +7,7 @@
 #include "syslog/SysLog.h"
 #include "util/CountedObject.h"
 #include "util/RefCount.h"
-#include "util/String.h"
+#include "util/MString.h"
 
 namespace muscle {
 

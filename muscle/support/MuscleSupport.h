@@ -36,6 +36,7 @@
  * subdirectory.
  */
 
+#include <cstring>
 #include <string.h>  /* for memcpy() */
 #include <stdio.h>
 #include <stdlib.h>
@@ -982,7 +983,7 @@ static inline uint32 CalculateChecksumForDouble(double v) {uint64 le = (v==0.0) 
  *  that looks like this:
  *      uint32 HashCode() const {return the_calculated_hash_code_for_this_object();}
  *  And that will be enough for the template magic to kick in and use MethodHashFunctor
- *  by default instead.  (See util/String.h for an example of this)
+ *  by default instead.  (See util/MString.h for an example of this)
  */
 template <class KeyType> class PODHashFunctor
 {
