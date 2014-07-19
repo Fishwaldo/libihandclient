@@ -10,7 +10,9 @@
 #define DeviceTypes_hpp
 
 enum DeviceType {
-    DEVICE_TYPE_SWITCH = 0x1
+    DEVICE_TYPE_SWITCH = 0x1,
+    DEVICE_TYPE_SENSORMULTILEVEL,
+    DEVICE_TYPE_METER
 };
 
 enum DeviceSwitchSubType {
