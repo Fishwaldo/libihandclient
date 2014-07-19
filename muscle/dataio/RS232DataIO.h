@@ -5,7 +5,7 @@
 
 #include <errno.h>
 #include "dataio/DataIO.h"
-#include "util/String.h"
+#include "util/MString.h"
 #include "util/Queue.h"
 
 namespace muscle {

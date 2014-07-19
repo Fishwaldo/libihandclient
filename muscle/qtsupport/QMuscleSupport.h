@@ -6,7 +6,7 @@
 #if QT_VERSION >= 0x040000
 # include <qhash.h>
 #else
-# include "util/String.h"
+# include "util/MString.h"
 #endif
 
 #include "support/MuscleSupport.h"  // for uint32, etc

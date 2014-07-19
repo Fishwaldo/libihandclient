@@ -11,7 +11,7 @@
 #include "util/FilePathInfo.h"
 #include "util/Hashtable.h"
 #include "util/NestCount.h"
-#include "util/String.h"
+#include "util/MString.h"
 #include "util/StringTokenizer.h"
 
 #ifdef MUSCLE_USE_MSVC_STACKWALKER

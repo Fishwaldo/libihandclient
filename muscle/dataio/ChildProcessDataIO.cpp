@@ -19,7 +19,7 @@
 #endif
 
 #include "util/NetworkUtilityFunctions.h"
-#include "util/String.h"
+#include "util/MString.h"
 #include "util/StringTokenizer.h"
 
 namespace muscle {

@@ -3,7 +3,7 @@
 #ifndef MuscleSharedMemory_h
 #define MuscleSharedMemory_h
 
-#include "util/String.h"
+#include "util/MString.h"
 #include "util/CountedObject.h"
 
 // This needs to be AFTER the MUSCLE includes, so that WIN32 will be defined if appropriate
