@@ -12,7 +12,8 @@
 enum DeviceType {
     DEVICE_TYPE_SWITCH = 0x1,
     DEVICE_TYPE_SENSORMULTILEVEL,
-    DEVICE_TYPE_METER
+    DEVICE_TYPE_METER,
+    DEVICE_TYPE_GENERIC
 };
 
 enum DeviceSwitchSubType {
