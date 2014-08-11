@@ -49,6 +49,37 @@ class VarStorage_t;
 typedef boost::shared_ptr<VarStorage_t> VarStorage;
 typedef boost::variant<std::string, int, long, long long, float, boost::posix_time::ptime > HashValsVariant_t;
 typedef std::map<std::string, HashValsVariant_t> HashVals;
+typedef std::map<int32_t, std::string> EnumVals_t;
+
+
+class ListVals {
+public:
+		bool setSelected(int32_t);
+		int32_t getSelected() const;
+		bool insertValue(int32_t, std::string);
+		bool removeValue(int32_t);
+		std::string getValue(int32_t);
+		size_t getSize();
+		typedef EnumVals_t::const_iterator const_iterator;
+		const_iterator begin() const { return this->Vals.begin(); };
+		const_iterator end() const { return this->Vals.end(); };
+private:
+		friend class boost::serialization::access;
+		friend std::ostream& operator<<(std::ostream&, const ListVals &);
+
+		template<class Archive>
+		void serialize(Archive & ar,const unsigned int version)
+		{
+			if (Archive::is_loading::value) {
+				this->Selected = 0;
+				this->Vals.clear();
+			}
+			ar & boost::serialization::make_nvp("Selected", this->Selected);
+			ar & boost::serialization::make_nvp("Vals", this->Vals);
+		}
+		int32_t Selected;
+		EnumVals_t Vals;
+};
 
 typedef enum StoredType_t {
 	ST_STRING = 1,
@@ -60,6 +91,7 @@ typedef enum StoredType_t {
 	ST_BOOL,
 	ST_DATETIME,
 	ST_VARSTORAGE,
+	ST_LIST,
 	ST_INVALID
 } StoredType_t;
 
@@ -75,6 +107,8 @@ typedef struct StoredVals_r {
 		bool BoolVal;
 		boost::posix_time::ptime DateTimeVal;
 		VarStorage VarVal;
+		ListVals ListVal;
+
 //	};
 	StoredType_t StoredType;
 } StoredVals_r;
@@ -83,6 +117,10 @@ typedef boost::shared_ptr<StoredVals_r> StoredVals_t;
 
 typedef std::vector<StoredVals_t> Vals;
 typedef std::map<std::string, Vals*> Variables_t;
+
+
+
+
 
 class VarStorage_t {
 public:
@@ -101,6 +139,7 @@ public:
 	int addBoolValue(std::string FieldName, bool val);
 	int addTimeValue(std::string FieldName, boost::posix_time::ptime val);
 	int addVarStorageValue(std::string Fieldname, VarStorage &val);
+	int addListValue(std::string Filename, ListVals val);
 	int replaceCharValue(std::string FieldName, char *val, uint8_t pos);
 	int replaceStringValue(std::string FieldName, std::string val, uint8_t pos = 0);
 	int replaceIntValue(std::string FieldName, int val, uint8_t pos = 0);
@@ -111,6 +150,7 @@ public:
 	int replaceBoolValue(std::string FieldName, bool val, uint8_t pos = 0);
 	int replaceTimeValue(std::string FieldName, boost::posix_time::ptime val, uint8_t pos = 0);
 	int replaceVarStorageValue(std::string FieldName, VarStorage &val, uint8_t pos = 0);
+	int replaceListValue(std::string FieldName, ListVals val, uint8_t pos = 0);
 	bool getCharValue(std::string FieldName, char *value, uint8_t pos);
 	bool getStringValue(std::string FieldName, std::string &value, uint8_t pos = 0);
 	bool getIntValue(std::string FieldName, int &value, uint8_t pos = 0);
@@ -121,6 +161,7 @@ public:
 	bool getBoolValue(std::string FieldName, bool &value, uint8_t pos = 0);
 	bool getTimeValue(std::string FieldName, boost::posix_time::ptime &value, uint8_t pos = 0);
 	bool getVarStorageValue(std::string FieldName, VarStorage &value, uint8_t pos = 0);
+	bool getListValue(std::string FieldName, ListVals &value, uint8_t pos = 0);
 	bool delValue(std::string FieldName, uint8_t pos);
 	bool delValue(std::string FieldName);
 	std::vector<std::string> *getFields();
@@ -210,10 +251,26 @@ void serialize(Archive & ar, StoredVals_t & g, const unsigned int version)
 		case ST_VARSTORAGE:
 			ar & make_nvp("VarStorage_t", g->VarVal);
 			break;
+		case ST_LIST:
+			ar & make_nvp("ListVals_t", g->ListVal);
+			break;
 		case ST_INVALID:
 			break;
 	}
 }
+#if 0
+template<class Archive>
+void serialize(Archive & ar, ListVals & g, const unsigned int version)
+{
+	if (Archive::is_loading::value) {
+		g.Selected = 0;
+		g.Vals.clear();
+	}
+	ar & make_nvp("Selected", g.Selected);
+	ar & make_nvp("Vals", g.Vals);
+}
+#endif
+
 #if 0
 template<class Archive>
 void load(Archive & ar, StoredVals_t & g, const unsigned int version)

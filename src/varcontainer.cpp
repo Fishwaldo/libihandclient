@@ -195,6 +195,24 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 						   this->addVarStorageValue(fieldname.Cstr(), newVarCon);
 					   }
 					   break;
+					   case ST_LIST: {
+						   muscle::String Listfieldname;
+						   uint32_t  Selected;
+						   ListVals newListVals;
+						   muscle::MessageFieldNameIterator hit = msgMsg()->GetFieldNameIterator();
+						   for (; hit.HasData(); hit++ ) {
+							   Listfieldname = hit.GetFieldName();
+							   uint32 val;
+							   msgMsg()->FindInt32(Listfieldname, 0, val);
+							   if (Listfieldname == "__tt-Selected") {
+								   Selected = val;
+							   } else {
+								   newListVals.insertValue(val, Listfieldname.Cstr());
+							   }
+						   }
+						   newListVals.setSelected(Selected);
+						   this->addListValue(fieldname.Cstr(), newListVals);
+					   }
 				   }
 			   }
 		   }
@@ -297,6 +315,14 @@ int VarStorage_t::addVarStorageValue(std::string FieldName, VarStorage &val) {
 	SV->StoredType = ST_VARSTORAGE;
 	return this->addValueP(FieldName, SV);
 }
+int VarStorage_t::addListValue(std::string FieldName, ListVals val) {
+	StoredVals_t SV(new StoredVals_r);
+	SV->ListVal = val;
+	SV->StoredType = ST_LIST;
+	return this->addValueP(FieldName, SV);
+}
+
+
 int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, uint8_t pos) {
 	Vals *storedval;
 	if (this->Variables.find(FieldName) != this->Variables.end()) {
@@ -379,6 +405,13 @@ int VarStorage_t::replaceVarStorageValue(std::string FieldName, VarStorage &val,
 	SV->StoredType = ST_VARSTORAGE;
 	return this->replaceValueP(FieldName, SV, pos);
 }
+int VarStorage_t::replaceListValue(std::string FieldName, ListVals val, uint8_t pos) {
+	StoredVals_t SV(new StoredVals_r);
+	SV->ListVal = val;
+	SV->StoredType = ST_LIST;
+	return this->replaceValueP(FieldName, SV, pos);
+}
+
 StoredType_t VarStorage_t::getType(std::string FieldName) {
 	if (this->Variables.find(FieldName) != this->Variables.end()) {
 		Vals *storedval = this->Variables[FieldName];
@@ -505,6 +538,17 @@ bool VarStorage_t::getVarStorageValue(std::string FieldName, VarStorage &value, 
 	}
 }
 
+bool VarStorage_t::getListValue(std::string FieldName, ListVals &value, uint8_t pos) {
+	StoredVals_t val;
+	try {
+		val = this->getValueP(FieldName, ST_LIST, pos);
+		value = val->ListVal;
+		return true;
+	} catch (VS_Exception &e) {
+		return false;
+	}
+}
+
 
 unsigned int VarStorage_t::getSize(std::string FieldName) {
 	if (this->Variables.find(FieldName) != this->Variables.end())
@@ -584,6 +628,16 @@ void VarStorage_t::printToStream(int tab) {
 					(*it2)->VarVal->printToStream(tab+1);
 					DOTAB;
 					cerr <<"\t}" << std::endl;
+			} else if ((*it2)->StoredType == ST_LIST) {
+					cerr << "{" << std::endl;
+					ListVals lv = (*it2)->ListVal;
+					ListVals::const_iterator lvit;
+					cout << "\t\tSelected:" << lv.getSelected() << std::endl;
+					for (lvit = lv.begin(); lvit != lv.end(); ++lvit) {
+						DOTAB;
+						cout << "\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
+					}
+				    cerr << "\t}" << std::endl;
 			} else {
 					cerr << "Unprintable Type" << std::endl;
 			}
@@ -646,6 +700,17 @@ muscle::MessageRef VarStorage_t::toMuscle() {
 					muscle::MessageRef VarMsg = (*it2)->VarVal->toMuscle();
 					VarMsg()->what = ST_VARSTORAGE;
 					newMsg()->AddMessage((*it).first.c_str(), VarMsg);
+				}
+			} else if ((*it2)->StoredType == ST_LIST) {
+				{
+					muscle::MessageRef ListMsg = muscle::GetMessageFromPool(ST_LIST);
+					ListVals lv = (*it2)->ListVal;
+					ListVals::const_iterator lvit;
+					for (lvit = lv.begin(); lvit != lv.end(); lvit++) {
+						ListMsg()->AddInt32((*lvit).second.c_str(), (*lvit).first);
+					}
+					ListMsg()->AddInt32("__tt-Selected", lv.getSelected());
+					newMsg()->AddMessage((*it).first.c_str(), ListMsg);
 				}
 			} else {
 					cerr << "Unprintable Type\n";
@@ -714,8 +779,12 @@ std::string VarStorage_t::getType(StoredType_t type) const {
 		break;
 		case ST_DATETIME:
 			return "DateTime";
+		break;
 		case ST_VARSTORAGE:
 			return "VarStorage_t";
+		break;
+		case ST_LIST:
+			return "List";
 		break;
 		case ST_INVALID:
 			return "Invalid Entry";
@@ -776,6 +845,10 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 					//DOTAB;
 					stream <<"\t}" << std::endl;
 					tab = tab -1;
+			} else if ((*it2)->StoredType == ST_LIST) {
+					stream << "{" << std::endl;
+					stream << "\t\t" << (*it2)->ListVal << std::endl;
+					stream << "\t}" << std::endl;
 			} else {
 					stream << "Unprintable Type" << std::endl;
 			}
@@ -860,6 +933,13 @@ void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName)
 			}
 		}
 		break;
+		case ST_LIST: {
+			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
+				ListVals value;
+				src->getListValue(fieldName, value, i);
+				dst->replaceListValue(fieldName, value, i);
+			}
+		}
 		case ST_INVALID:
 		break;
 	}
@@ -868,3 +948,50 @@ void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName)
 
 
 
+
+bool ListVals::setSelected(int32_t value) {
+	if (this->Vals.find(value) != this->Vals.end()) {
+		this->Selected = value;
+		return true;
+	}
+	return false;
+}
+int32_t ListVals::getSelected() const {
+	return this->Selected;
+}
+bool ListVals::insertValue(int32_t value, std::string desc) {
+	if ((value > 0) && (this->Vals.find(value) == this->Vals.end())) {
+		this->Vals.insert(std::pair<int32_t, std::string>(value, desc));
+		return true;
+	}
+	return false;
+}
+
+bool ListVals::removeValue(int32_t value) {
+	if (this->Vals.find(value) != this->Vals.end()) {
+		this->Vals.erase(value);
+		if (this->Selected == value)
+			this->Selected = 0;
+		return true;
+	}
+	return false;
+}
+std::string ListVals::getValue(int32_t value) {
+	if (this->Vals.find(value) != this->Vals.end()) {
+		return this->Vals.at(value);
+	}
+	return "";
+}
+size_t ListVals::getSize() {
+	return this->Vals.size();
+}
+
+
+std::ostream& operator<<(std::ostream &stream, const ListVals &lv) {
+	ListVals::const_iterator lvit;
+	stream << "Selected:" << lv.getSelected() << std::endl;
+	for (lvit = lv.begin(); lvit != lv.end(); ++lvit) {
+		stream << (*lvit).first << "=" << (*lvit).second << std::endl;
+	}
+	return stream;
+}

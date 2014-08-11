@@ -55,6 +55,12 @@ namespace testing {
 						 VarStorage newVar(new VarStorage_t());
 						 newVar->addIntValue("INT", (int)123);
 						 this->Vars->addVarStorageValue("VARSTORAGE", newVar);
+						 ListVals lv;
+						 lv.insertValue(1, "ListValue 1");
+						 lv.insertValue(2, "ListValue 2");
+						 lv.setSelected(1);
+						 this->Vars->addListValue("ListValue", lv);
+
 
 						 /* test Array Handling */
 						 this->Vars->addIntValue("MULTIINT", (int)456);
@@ -76,10 +82,22 @@ namespace testing {
 
 				VarStorage Vars;
 			};
+		class ListValueTest : public testing::Test {
+				protected:
+				     virtual void SetUp() {
+						 //this->Vars &= new VarStorage();
+						iHanClient::Logging::Log::Create("", true, iHanClient::Logging::LogLevel_Debug);
+						Vals.insertValue(1, "test");
+						Vals.insertValue(2, "test2");
+						Vals.setSelected(1);
+				     }
 
+				ListVals Vals;
+
+			};
 
 			TEST_F(VarContainerTest, ReturnsTrueForCountItems) {
-				EXPECT_EQ(Vars->getSize(), 16);
+				EXPECT_EQ(Vars->getSize(), 17);
 			}
 
 			TEST_F(VarContainerTest, CheckIntContents) {
@@ -134,6 +152,12 @@ namespace testing {
 				EXPECT_TRUE(val->getIntValue("INT", i));
 				EXPECT_EQ((int)123, i);
 			}
+			TEST_F(VarContainerTest, CheckListContents) {
+				ListVals val;
+				EXPECT_TRUE(Vars->getListValue("ListValue", val));
+				EXPECT_EQ(val.getSelected(), 1);
+			}
+
 			TEST_F(VarContainerTest, AddIntValueAndCheck) {
 				int i = 321;
 				EXPECT_TRUE(Vars->addIntValue("INT", i)) << "Adding Int Value Failed";
@@ -183,6 +207,19 @@ namespace testing {
 				EXPECT_TRUE(Vars->getTimeValue("DATE", j, 1));
 				EXPECT_EQ(i, j);
 			}
+			TEST_F(VarContainerTest, AddListValueAndCheck) {
+				 ListVals lv;
+				 EXPECT_TRUE(lv.insertValue(3, "ListValue 3"));
+				 EXPECT_TRUE(lv.insertValue(4, "ListValue 4"));
+				 EXPECT_TRUE(lv.setSelected(3));
+				 EXPECT_TRUE(this->Vars->addListValue("ListValue", lv));
+				 ListVals lv2;
+				 EXPECT_TRUE(this->Vars->getListValue("ListValue", lv2, 1));
+				 EXPECT_EQ(lv2.getSelected(), 3);
+				 EXPECT_EQ(lv2.getValue(3), "ListValue 3");
+			}
+
+
 			TEST_F(VarContainerTest, ReplaceIntValueAndCheck) {
 				int i = 456;
 				EXPECT_TRUE(Vars->addIntValue("INT", i)) << "Adding 2nd Value Failed";
@@ -285,6 +322,20 @@ namespace testing {
 				EXPECT_TRUE(getVar->getStringValue("STRING", value));
 				EXPECT_EQ("NewVar", value);
 			}
+			TEST_F(VarContainerTest, ReplaceListValueAndCheck) {
+				ListVals lv;
+				EXPECT_TRUE(lv.insertValue(3, "ListValue 3"));
+				EXPECT_TRUE(lv.insertValue(4, "ListValue 4"));
+				EXPECT_TRUE(lv.setSelected(3));
+				EXPECT_EQ(this->Vars->replaceListValue("ListValue", lv), 0);
+
+				ListVals lv2;
+				EXPECT_TRUE(this->Vars->getListValue("ListValue", lv2));
+				EXPECT_EQ(lv2.getSelected(), 3);
+			}
+
+
+
 			TEST_F(VarContainerTest, CopyConstructor) {
 				 VarContainerCopy(newvals, this->Vars);
 				 this->Vars->addIntValue("INT", (int)123);
@@ -342,7 +393,12 @@ namespace testing {
 					 EXPECT_TRUE(oldval->getIntValue("INT", oldint));
 					 EXPECT_TRUE(newval->getIntValue("INT", newint));
 					 EXPECT_EQ(oldint, newint);
-
+				 }
+				 {
+					 ListVals lv, lv2;
+					 EXPECT_TRUE(this->Vars->getListValue("ListValue", lv));
+					 EXPECT_TRUE(newvals->getListValue("ListValue", lv2));
+					 EXPECT_EQ(lv.getSelected(), lv2.getSelected());
 				 }
 			}
 			TEST_F(VarContainerTest, Serialize) {
@@ -359,7 +415,7 @@ namespace testing {
 				boost::archive::xml_iarchive ia(ifs);
 				ia >> BOOST_SERIALIZATION_NVP(newVars);
 				ifs.close();
-				EXPECT_EQ(newVars->getSize(),16);
+				EXPECT_EQ(newVars->getSize(),17);
 				int i;
 				newVars->getIntValue("INT", i);
 				EXPECT_EQ(123,i);
@@ -381,6 +437,11 @@ namespace testing {
 				boost::posix_time::ptime n;
 				newVars->getTimeValue("DATE", n);
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")), n);
+				ListVals lv;
+				newVars->getListValue("ListValue", lv);
+				EXPECT_EQ(lv.getSelected(), 1);
+
+
 				Vars->getIntValue("MULTIINT", i, 0);
 				EXPECT_EQ(456,i);
 				Vars->getIntValue("MULTIINT", i, 1);
@@ -483,6 +544,27 @@ namespace testing {
 				EXPECT_EQ(newVars->getSize("MULTIBOOL"), 2);
 				EXPECT_TRUE(newVars->delValue("MULTIBOOL"));
 				EXPECT_EQ(newVars->getSize("MULTIBOOL"), 0);
+			}
+
+			TEST_F(ListValueTest, addEntry) {
+				ListVals lv;
+				EXPECT_TRUE(lv.insertValue(1, "test"));
+			}
+			TEST_F(ListValueTest, getEntry) {
+				EXPECT_STREQ("test", this->Vals.getValue(1).c_str());
+			}
+			TEST_F(ListValueTest, delEntry) {
+				EXPECT_TRUE(this->Vals.removeValue(2));
+				EXPECT_EQ(this->Vals.getSize(), 1);
+				EXPECT_STREQ("", this->Vals.getValue(2).c_str());
+			}
+			TEST_F(ListValueTest, invalidSelection) {
+				EXPECT_FALSE(this->Vals.setSelected(10));
+			}
+			TEST_F(ListValueTest, validSelection) {
+				EXPECT_TRUE(this->Vals.setSelected(2));
+				EXPECT_EQ(this->Vals.getSelected(), 2);
+				EXPECT_STREQ("test2", this->Vals.getValue(2).c_str());
 			}
 
 
