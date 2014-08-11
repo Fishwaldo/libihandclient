@@ -44,11 +44,6 @@
 using namespace boost;
 using namespace std;
 
-/* forward Dec */
-class VarStorage_t;
-typedef boost::shared_ptr<VarStorage_t> VarStorage;
-typedef boost::variant<std::string, int, long, long long, float, boost::posix_time::ptime > HashValsVariant_t;
-typedef std::map<std::string, HashValsVariant_t> HashVals;
 typedef std::map<int32_t, std::string> EnumVals_t;
 
 
@@ -80,6 +75,14 @@ private:
 		int32_t Selected;
 		EnumVals_t Vals;
 };
+
+/* forward Dec */
+class VarStorage_t;
+typedef boost::shared_ptr<VarStorage_t> VarStorage;
+typedef boost::variant<std::string, int, long, long long, float, boost::posix_time::ptime, ListVals > HashValsVariant_t;
+typedef std::map<std::string, HashValsVariant_t> HashVals;
+
+
 
 typedef enum StoredType_t {
 	ST_STRING = 1,

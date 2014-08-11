@@ -157,7 +157,7 @@ typedef enum t_ConfigType {
 				TC_LONGLONG,
 				TC_FLOAT,
 				TC_STRING,
-				TC_ENUM,
+				TC_LIST,
 				TC_IPADDR,
 				TC_BOOL,
 				TC_HASH,
