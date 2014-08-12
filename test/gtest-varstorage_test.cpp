@@ -379,11 +379,11 @@ namespace testing {
 					 HashVals oldval, newval;
 					 EXPECT_TRUE(this->Vars->getHashValue("HASH", oldval));
 					 EXPECT_TRUE(newvals->getHashValue("HASH", newval));
-					 EXPECT_EQ(oldval["STRING"], newval["STRING"]);
-					 EXPECT_EQ(oldval["INT"], newval["INT"]);
-					 EXPECT_EQ(oldval["LONG"], newval["LONG"]);
-					 EXPECT_EQ(oldval["LONGLONG"], newval["LONGLONG"]);
-					 EXPECT_EQ(oldval["TIME"], newval["TIME"]);
+					 EXPECT_STREQ(boost::get<std::string>(oldval["STRING"]).c_str(), boost::get<std::string>(newval["STRING"]).c_str());
+					 EXPECT_EQ(boost::get<int>(oldval["INT"]), boost::get<int>(newval["INT"]));
+					 EXPECT_EQ(boost::get<long>(oldval["LONG"]), boost::get<long>(newval["LONG"]));
+					 EXPECT_EQ(boost::get<long long>(oldval["LONGLONG"]), boost::get<long long>(newval["LONGLONG"]));
+					 EXPECT_EQ(boost::get<boost::posix_time::ptime>(oldval["TIME"]), boost::get<boost::posix_time::ptime>(newval["TIME"]));
 				 }
 				 {
 					 VarStorage oldval, newval;
