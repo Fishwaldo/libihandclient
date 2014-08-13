@@ -45,7 +45,7 @@ using namespace boost;
 using namespace std;
 
 typedef std::map<int32_t, std::string> EnumVals_t;
-
+typedef std::map<int32_t, std::string>::const_iterator list_const_iterator;
 
 class ListVals {
 public:
@@ -142,7 +142,6 @@ public:
 	int addBoolValue(std::string FieldName, bool val);
 	int addTimeValue(std::string FieldName, boost::posix_time::ptime val);
 	int addVarStorageValue(std::string Fieldname, VarStorage &val);
-	int addListValue(std::string Filename, ListVals val);
 	int replaceCharValue(std::string FieldName, char *val, uint8_t pos);
 	int replaceStringValue(std::string FieldName, std::string val, uint8_t pos = 0);
 	int replaceIntValue(std::string FieldName, int val, uint8_t pos = 0);
@@ -153,7 +152,6 @@ public:
 	int replaceBoolValue(std::string FieldName, bool val, uint8_t pos = 0);
 	int replaceTimeValue(std::string FieldName, boost::posix_time::ptime val, uint8_t pos = 0);
 	int replaceVarStorageValue(std::string FieldName, VarStorage &val, uint8_t pos = 0);
-	int replaceListValue(std::string FieldName, ListVals val, uint8_t pos = 0);
 	bool getCharValue(std::string FieldName, char *value, uint8_t pos);
 	bool getStringValue(std::string FieldName, std::string &value, uint8_t pos = 0);
 	bool getIntValue(std::string FieldName, int &value, uint8_t pos = 0);
@@ -164,9 +162,25 @@ public:
 	bool getBoolValue(std::string FieldName, bool &value, uint8_t pos = 0);
 	bool getTimeValue(std::string FieldName, boost::posix_time::ptime &value, uint8_t pos = 0);
 	bool getVarStorageValue(std::string FieldName, VarStorage &value, uint8_t pos = 0);
-	bool getListValue(std::string FieldName, ListVals &value, uint8_t pos = 0);
 	bool delValue(std::string FieldName, uint8_t pos);
 	bool delValue(std::string FieldName);
+
+
+
+	bool addListValue(std::string Filename, uint32_t index, std::string val, uint8_t pos = 0);
+	bool delListValue(std::string Filename, uint32_t index, uint8_t pos = 0);
+	bool getListValue(std::string Filename, uint32_t index, std::string &value, uint8_t pos = 0);
+	bool setListSelectedValue(std::string Filename, uint32_t index, uint8_t pos = 0);
+	bool getListSelectedValue(std::string Filename, uint32_t &value, uint8_t pos = 0);
+	list_const_iterator getListIterBegin(std::string Fieldname, uint8_t pos = 0);
+	list_const_iterator getListIterEnd(std::string Fieldname, uint8_t pos = 0);
+	uint32_t getListSize(std::string Filename, uint8_t pos = 0);
+	int addListValue_p(std::string Filename, ListVals val);
+	int replaceListValue_p(std::string FieldName, ListVals val, uint8_t pos = 0);
+	bool getListValue_p(std::string FieldName, ListVals &value, uint8_t pos = 0);
+
+
+
 	std::vector<std::string> *getFields();
 	unsigned int getSize(std::string FieldName);
 	unsigned int getSize();
@@ -178,11 +192,15 @@ public:
 private:
 	friend std::ostream& operator<<(std::ostream&, const VarStorage_t &);
 	friend class boost::serialization::access;
+	friend void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName);
 	template<class Archive> void serialize(Archive & ar, const unsigned int version);
 	std::string getType(StoredVals_t SV) const;
 	std::string getType(StoredType_t type) const ;
 	int addValueP(std::string FieldName, StoredVals_t);
 	int replaceValueP(std::string FieldName, StoredVals_t val, uint8_t pos);
+
+
+
 	StoredVals_t getValueP(std::string FieldName, StoredType_t type, uint8_t pos);
 	Variables_t Variables;
 };

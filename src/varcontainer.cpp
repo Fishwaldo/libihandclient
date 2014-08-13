@@ -211,7 +211,7 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 							   }
 						   }
 						   newListVals.setSelected(Selected);
-						   this->addListValue(fieldname.Cstr(), newListVals);
+						   this->addListValue_p(fieldname.Cstr(), newListVals);
 					   }
 				   }
 			   }
@@ -315,12 +315,7 @@ int VarStorage_t::addVarStorageValue(std::string FieldName, VarStorage &val) {
 	SV->StoredType = ST_VARSTORAGE;
 	return this->addValueP(FieldName, SV);
 }
-int VarStorage_t::addListValue(std::string FieldName, ListVals val) {
-	StoredVals_t SV(new StoredVals_r);
-	SV->ListVal = val;
-	SV->StoredType = ST_LIST;
-	return this->addValueP(FieldName, SV);
-}
+
 
 
 int VarStorage_t::replaceValueP(std::string FieldName, StoredVals_t SV, uint8_t pos) {
@@ -405,7 +400,7 @@ int VarStorage_t::replaceVarStorageValue(std::string FieldName, VarStorage &val,
 	SV->StoredType = ST_VARSTORAGE;
 	return this->replaceValueP(FieldName, SV, pos);
 }
-int VarStorage_t::replaceListValue(std::string FieldName, ListVals val, uint8_t pos) {
+int VarStorage_t::replaceListValue_p(std::string FieldName, ListVals val, uint8_t pos) {
 	StoredVals_t SV(new StoredVals_r);
 	SV->ListVal = val;
 	SV->StoredType = ST_LIST;
@@ -538,7 +533,7 @@ bool VarStorage_t::getVarStorageValue(std::string FieldName, VarStorage &value, 
 	}
 }
 
-bool VarStorage_t::getListValue(std::string FieldName, ListVals &value, uint8_t pos) {
+bool VarStorage_t::getListValue_p(std::string FieldName, ListVals &value, uint8_t pos) {
 	StoredVals_t val;
 	try {
 		val = this->getValueP(FieldName, ST_LIST, pos);
@@ -792,6 +787,130 @@ std::string VarStorage_t::getType(StoredType_t type) const {
 	}
 	return "";
 }
+
+int VarStorage_t::addListValue_p(std::string FieldName, ListVals val) {
+	StoredVals_t SV(new StoredVals_r);
+	SV->ListVal = val;
+	SV->StoredType = ST_LIST;
+	return this->addValueP(FieldName, SV);
+}
+
+
+bool VarStorage_t::addListValue(std::string Fieldname, uint32_t index, std::string val, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) > 0) {
+		this->getListValue_p(Fieldname, vals, pos);
+	}
+	if (vals.insertValue(index, val)) {
+		return (this->replaceListValue_p(Fieldname, vals, pos) >= 0 ? true : false);
+	} else {
+		return false;
+	}
+}
+bool VarStorage_t::delListValue(std::string Fieldname, uint32_t index, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) == 0) {
+		return false;
+	}
+	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		return false;
+	}
+	if (vals.removeValue(index)) {
+		return (this->replaceListValue_p(Fieldname, vals, pos) >= 0 ? true : false);
+	} else {
+		return false;
+	}
+}
+bool VarStorage_t::getListValue(std::string Fieldname, uint32_t index, std::string &value, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) == 0) {
+		return false;
+	}
+	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		return false;
+	}
+	value = vals.getValue(index);
+	return true;
+}
+bool VarStorage_t::setListSelectedValue(std::string Fieldname, uint32_t index, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) == 0) {
+		return false;
+	}
+	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		return false;
+	}
+	if (vals.setSelected(index)) {
+		return (this->replaceListValue_p(Fieldname, vals, pos) >= 0 ? true : false);
+	} else {
+		return false;
+	}
+}
+bool VarStorage_t::getListSelectedValue(std::string Fieldname, uint32_t &value, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) == 0) {
+		return false;
+	}
+	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		return false;
+	}
+	value = vals.getSelected();
+	return true;
+}
+list_const_iterator VarStorage_t::getListIterBegin(std::string Fieldname, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) == 0) {
+		return vals.end();
+	}
+	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		return vals.end();
+	}
+	return vals.begin();
+}
+list_const_iterator VarStorage_t::getListIterEnd(std::string Fieldname, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) == 0) {
+		return vals.end();
+	}
+	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		return vals.end();
+	}
+	return vals.begin();
+}
+uint32_t VarStorage_t::getListSize(std::string Fieldname, uint8_t pos) {
+	/* see if the ListValue exists */
+	ListVals vals;
+	if (this->getSize(Fieldname) == 0) {
+		return 0;
+	}
+	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		return 0;
+	}
+	return vals.getSize();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 std::ostream& operator<<(std::ostream &os, const VarStorage &ptr) {
         os << *ptr.get();
 	return os;
@@ -936,8 +1055,8 @@ void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName)
 		case ST_LIST: {
 			for (unsigned int i = 0; i < src->getSize(fieldName); i++) {
 				ListVals value;
-				src->getListValue(fieldName, value, i);
-				dst->replaceListValue(fieldName, value, i);
+				src->getListValue_p(fieldName, value, i);
+				dst->replaceListValue_p(fieldName, value, i);
 			}
 		}
 		case ST_INVALID:
@@ -949,11 +1068,15 @@ void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName)
 
 
 
+
+
+
 bool ListVals::setSelected(int32_t value) {
 	if (this->Vals.find(value) != this->Vals.end()) {
 		this->Selected = value;
 		return true;
 	}
+//	std::cout << *this << std::endl;
 	return false;
 }
 int32_t ListVals::getSelected() const {

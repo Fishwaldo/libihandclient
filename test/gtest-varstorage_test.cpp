@@ -55,11 +55,9 @@ namespace testing {
 						 VarStorage newVar(new VarStorage_t());
 						 newVar->addIntValue("INT", (int)123);
 						 this->Vars->addVarStorageValue("VARSTORAGE", newVar);
-						 ListVals lv;
-						 lv.insertValue(1, "ListValue 1");
-						 lv.insertValue(2, "ListValue 2");
-						 lv.setSelected(1);
-						 this->Vars->addListValue("ListValue", lv);
+						 this->Vars->addListValue("ListValue", 1, "ListValue 1");
+						 this->Vars->addListValue("ListValue", 2, "ListValue 2");
+						 this->Vars->setListSelectedValue("ListValue", 2);
 
 
 						 /* test Array Handling */
@@ -153,9 +151,9 @@ namespace testing {
 				EXPECT_EQ((int)123, i);
 			}
 			TEST_F(VarContainerTest, CheckListContents) {
-				ListVals val;
-				EXPECT_TRUE(Vars->getListValue("ListValue", val));
-				EXPECT_EQ(val.getSelected(), 1);
+				uint32_t val;
+				EXPECT_TRUE(Vars->getListSelectedValue("ListValue", val));
+				EXPECT_EQ(val, 2);
 			}
 
 			TEST_F(VarContainerTest, AddIntValueAndCheck) {
@@ -208,15 +206,17 @@ namespace testing {
 				EXPECT_EQ(i, j);
 			}
 			TEST_F(VarContainerTest, AddListValueAndCheck) {
-				 ListVals lv;
-				 EXPECT_TRUE(lv.insertValue(3, "ListValue 3"));
-				 EXPECT_TRUE(lv.insertValue(4, "ListValue 4"));
-				 EXPECT_TRUE(lv.setSelected(3));
-				 EXPECT_TRUE(this->Vars->addListValue("ListValue", lv));
-				 ListVals lv2;
-				 EXPECT_TRUE(this->Vars->getListValue("ListValue", lv2, 1));
-				 EXPECT_EQ(lv2.getSelected(), 3);
-				 EXPECT_EQ(lv2.getValue(3), "ListValue 3");
+				EXPECT_TRUE(this->Vars->addListValue("ListValue", 3, "ListValue 3", 1));
+				EXPECT_TRUE(this->Vars->addListValue("ListValue", 4, "ListValue 4", 1));
+				EXPECT_TRUE(this->Vars->setListSelectedValue("ListValue", 3, 1));
+
+				EXPECT_EQ(this->Vars->getSize("ListValue"), 2);
+				uint32_t sel;
+				EXPECT_TRUE(this->Vars->getListSelectedValue("ListValue", sel, 1));
+				EXPECT_EQ(sel, 3);
+				std::string val;
+				EXPECT_TRUE(this->Vars->getListValue("ListValue", 3, val, 1));
+				EXPECT_STREQ(val.c_str(), "ListValue 3");
 			}
 
 
@@ -323,15 +323,22 @@ namespace testing {
 				EXPECT_EQ("NewVar", value);
 			}
 			TEST_F(VarContainerTest, ReplaceListValueAndCheck) {
-				ListVals lv;
-				EXPECT_TRUE(lv.insertValue(3, "ListValue 3"));
-				EXPECT_TRUE(lv.insertValue(4, "ListValue 4"));
-				EXPECT_TRUE(lv.setSelected(3));
-				EXPECT_EQ(this->Vars->replaceListValue("ListValue", lv), 0);
+				EXPECT_TRUE(this->Vars->delValue("ListValue"));
 
-				ListVals lv2;
-				EXPECT_TRUE(this->Vars->getListValue("ListValue", lv2));
-				EXPECT_EQ(lv2.getSelected(), 3);
+				EXPECT_EQ(this->Vars->getSize("ListValue"), 0);
+				EXPECT_TRUE(this->Vars->addListValue("ListValue", 3, "ListValue 3"));
+				EXPECT_TRUE(this->Vars->addListValue("ListValue", 4, "ListValue 4"));
+				EXPECT_TRUE(this->Vars->setListSelectedValue("ListValue", 4));
+
+				EXPECT_EQ(this->Vars->getSize("ListValue"), 1);
+
+				uint32_t sel;
+				EXPECT_TRUE(this->Vars->getListSelectedValue("ListValue", sel));
+				EXPECT_EQ(sel, 4);
+				std::string val;
+				EXPECT_TRUE(this->Vars->getListValue("ListValue", 4, val));
+				EXPECT_STREQ(val.c_str(), "ListValue 4");
+
 			}
 
 
@@ -379,11 +386,11 @@ namespace testing {
 					 HashVals oldval, newval;
 					 EXPECT_TRUE(this->Vars->getHashValue("HASH", oldval));
 					 EXPECT_TRUE(newvals->getHashValue("HASH", newval));
-					 EXPECT_EQ(oldval["STRING"], newval["STRING"]);
-					 EXPECT_EQ(oldval["INT"], newval["INT"]);
-					 EXPECT_EQ(oldval["LONG"], newval["LONG"]);
-					 EXPECT_EQ(oldval["LONGLONG"], newval["LONGLONG"]);
-					 EXPECT_EQ(oldval["TIME"], newval["TIME"]);
+					 EXPECT_STREQ(boost::get<std::string>(oldval["STRING"]).c_str(), boost::get<std::string>(newval["STRING"]).c_str());
+					 EXPECT_EQ(boost::get<int>(oldval["INT"]), boost::get<int>(newval["INT"]));
+					 EXPECT_EQ(boost::get<long>(oldval["LONG"]), boost::get<long>(newval["LONG"]));
+					 EXPECT_EQ(boost::get<long long>(oldval["LONGLONG"]), boost::get<long long>(newval["LONGLONG"]));
+					 EXPECT_EQ(boost::get<boost::posix_time::ptime>(oldval["TIME"]), boost::get<boost::posix_time::ptime>(newval["TIME"]));
 				 }
 				 {
 					 VarStorage oldval, newval;
@@ -395,10 +402,10 @@ namespace testing {
 					 EXPECT_EQ(oldint, newint);
 				 }
 				 {
-					 ListVals lv, lv2;
-					 EXPECT_TRUE(this->Vars->getListValue("ListValue", lv));
-					 EXPECT_TRUE(newvals->getListValue("ListValue", lv2));
-					 EXPECT_EQ(lv.getSelected(), lv2.getSelected());
+					 uint32 lv, lv2;
+					 EXPECT_TRUE(this->Vars->getListSelectedValue("ListValue", lv));
+					 EXPECT_TRUE(newvals->getListSelectedValue("ListValue", lv2));
+					 EXPECT_EQ(lv, lv2);
 				 }
 			}
 			TEST_F(VarContainerTest, Serialize) {
@@ -437,9 +444,9 @@ namespace testing {
 				boost::posix_time::ptime n;
 				newVars->getTimeValue("DATE", n);
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")), n);
-				ListVals lv;
-				newVars->getListValue("ListValue", lv);
-				EXPECT_EQ(lv.getSelected(), 1);
+				uint32_t lv;
+				newVars->getListSelectedValue("ListValue", lv);
+				EXPECT_EQ(lv, 2);
 
 
 				Vars->getIntValue("MULTIINT", i, 0);
