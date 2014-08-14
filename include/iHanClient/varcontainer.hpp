@@ -20,6 +20,7 @@
 #include <boost/shared_array.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/serialization/array.hpp>
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
@@ -29,6 +30,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/split_free.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/date_time/posix_time/time_serialize.hpp>
 #include <boost/date_time/gregorian/greg_serialize.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -80,8 +82,20 @@ private:
 typedef struct ListOptions_t {
 		int32_t index;
 		char desc[256];
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version)
+		{
+//			if (Archive::is_loading::value) {
+//				g.Selected = 0;
+//				g.Vals.clear();
+//			}
+			ar & boost::serialization::make_nvp("index", index);
+			ar & boost::serialization::make_nvp("desc", desc);
+		}
+
 }ListOptions_t;
 
+BOOST_IS_BITWISE_SERIALIZABLE(ListOptions_t)
 
 #define CreateListOptions(name, size) ListOptions_t *name = new ListOptions_t[size+1]
 #define AddListOptions(name, pos, indexval, descval) name[pos].index = indexval; strncpy(name[pos].desc, descval, 256)
@@ -296,6 +310,51 @@ void serialize(Archive & ar, StoredVals_t & g, const unsigned int version)
 			break;
 	}
 }
+template<class Archive>
+inline void save(
+    Archive & ar,
+    const boost::shared_array<ListOptions_t> &t,
+    const unsigned int /* file_version */
+){
+    // The most common cause of trapping here would be serializing
+    // something like shared_ptr<int>.  This occurs because int
+    // is never tracked by default.  Wrap int in a trackable type
+    BOOST_STATIC_ASSERT((tracking_level< boost::shared_array<ListOptions_t> >::value != track_never));
+    const  ListOptions_t* t_ptr = t.get();
+    ar << boost::serialization::make_nvp("px", t_ptr);
+}
+template<class Archive>
+inline void load(
+    Archive & ar,
+    boost::shared_array<ListOptions_t> &t,
+    const unsigned int /*file_version*/
+){
+    // The most common cause of trapping here would be serializing
+    // something like shared_ptr<int>.  This occurs because int
+    // is never tracked by default.  Wrap int in a trackable type
+    BOOST_STATIC_ASSERT((tracking_level< boost::shared_array<ListOptions_t> >::value != track_never));
+    ListOptions_t* r;
+    ar >> boost::serialization::make_nvp("px", r);
+    t.reset(r);
+//    ar.reset(t,r);
+}
+
+template<class Archive>
+inline void serialize(
+    Archive & ar,
+    boost::shared_array<ListOptions_t> &t,
+    const unsigned int file_version
+){
+    // correct shared_ptr serialization depends upon object tracking
+    // being used.
+    BOOST_STATIC_ASSERT(
+        boost::serialization::tracking_level< boost::shared_array<ListOptions_t> >::value
+        != boost::serialization::track_never
+    );
+    boost::serialization::split_free(ar, t, file_version);
+}
+
+
 #if 0
 template<class Archive>
 void serialize(Archive & ar, ListVals & g, const unsigned int version)

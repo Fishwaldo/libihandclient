@@ -51,6 +51,14 @@ namespace testing {
 						 newHashVars["LONGLONG"] = (long long)-1;
 						 newHashVars["FLOAT"] = (float)1.24;
 						 newHashVars["TIME"] = boost::posix_time::ptime(boost::posix_time::time_from_string("2011-01-10 1:30:12"));
+						 CreateListOptions(options, 2);
+						 AddListOptions(options, 0, 1, "test");
+						 AddListOptions(options, 1, 2, "test2");
+						 FinishListOptions(options, 2);
+						 newHashVars["LIST"] = (ListOptions)options;
+
+
+
 						 this->Vars->addHashValue("HASH", newHashVars);
 						 VarStorage newVar(new VarStorage_t());
 						 newVar->addIntValue("INT", (int)123);
@@ -477,7 +485,7 @@ namespace testing {
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")), n);
 				Vars->getTimeValue("MULTIDATE", n, 1);
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2011-02-28 11:33:43")), n);
-
+				//std::cout << Vars << std::endl;
 				std::remove(filename.c_str());
 #if 0
 				find_unreachable_objects();
