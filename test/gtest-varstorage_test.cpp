@@ -485,7 +485,7 @@ namespace testing {
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")), n);
 				Vars->getTimeValue("MULTIDATE", n, 1);
 				EXPECT_EQ(boost::posix_time::ptime(boost::posix_time::time_from_string("2011-02-28 11:33:43")), n);
-				//std::cout << Vars << std::endl;
+				//std::cout << newVars << std::endl;
 				std::remove(filename.c_str());
 #if 0
 				find_unreachable_objects();
