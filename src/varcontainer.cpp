@@ -163,14 +163,30 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 								   }
 								   break;
 								   case B_MESSAGE_TYPE: {
-									   muscle::MessageRef DateMsgRef;
+									   muscle::MessageRef MyMsgRef;
 									   muscle::String val;
-									   msgMsg()->FindMessage(Hashfieldname, 0, DateMsgRef);
-									   DateMsgRef()->FindString("DATE", 0, val);
-									   try {
-										   newHashVals[Hashfieldname.Cstr()] = boost::posix_time::from_iso_string(val.Cstr());
-									   } catch (std::exception &e) {
-										   newHashVals[Hashfieldname.Cstr()] = boost::posix_time::not_a_date_time;
+									   msgMsg()->FindMessage(Hashfieldname, 0, MyMsgRef);
+									   if (MyMsgRef()->what == ST_DATETIME) {
+										   MyMsgRef()->FindString("DATE", 0, val);
+										   try {
+											   newHashVals[Hashfieldname.Cstr()] = boost::posix_time::from_iso_string(val.Cstr());
+										   } catch (std::exception &e) {
+											   newHashVals[Hashfieldname.Cstr()] = boost::posix_time::not_a_date_time;
+										   }
+									   } else if (MyMsgRef()->what == ST_LIST) {
+										   muscle::MessageFieldNameIterator lit = MyMsgRef()->GetFieldNameIterator();
+										   muscle::String listindex;
+										   muscle::String listvalue;
+										   ListOptions_t *lo = new ListOptions_t[MyMsgRef()->GetNumNames()];
+										   int i = 0;
+										   for (; lit.HasData(); lit++ ) {
+											   listindex = lit.GetFieldName();
+											   MyMsgRef()->FindString(listindex, 0, listvalue);
+											   lo[i].index = atoi(listindex.Cstr());
+											   strncpy(lo[i].desc, listvalue.Cstr(), 256);
+											   i++;
+										   }
+										   newHashVals[Hashfieldname.Cstr()] = (ListOptions)lo;
 									   }
 								   }
 								   break;
@@ -580,19 +596,21 @@ bool VarStorage_t::delValue(std::string FieldName, uint8_t pos) {
 
 
 
-#define DOTAB for (int tabs = 0; tabs != tab; tabs++) cerr << "\t"
-
+//#define DOTAB for (int tabs = 0; tabs != tab; tabs++) cerr << "\t"
+//#undef DOTAB
+int tab = 0;
+#define DOTAB(what) for (int tabs = 0; tabs != tab; tabs++) what << "\t"
 
 void VarStorage_t::printToStream(int tab) {
 	std::map<std::string, Vals *>::iterator it;
 	Vals::iterator it2;
 	int i;
 	for (it=this->Variables.begin(); it != this->Variables.end(); it++) {
-		DOTAB;
+		DOTAB(cerr);
 		cerr << "Variable: " << (*it).first << " size: " << (*it).second->size() << " Type: " << getType((*it).second->front()) << std::endl;
 		i = 0;
 		for (it2 = (*it).second->begin(); it2 != (*it).second->end(); it2++) {
-			DOTAB;
+			DOTAB(cerr);
 			cerr << "\tPos: " << i++ << " Value: ";
 			if ((*it2)->StoredType == ST_STRING) {
 					cerr << (*it2)->StrVal << std::endl;
@@ -610,7 +628,7 @@ void VarStorage_t::printToStream(int tab) {
 						HashVals hv = (*it2)->HashVal;
 						std::map<std::string, HashValsVariant_t>::const_iterator hvit;
 						for (hvit = hv.begin(); hvit != hv.end(); hvit++) {
-							DOTAB;
+							DOTAB(cerr);
 							cout << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
 						}
 					}
@@ -621,7 +639,7 @@ void VarStorage_t::printToStream(int tab) {
 			} else if ((*it2)->StoredType == ST_VARSTORAGE) {
 					cerr << "{" << std::endl;
 					(*it2)->VarVal->printToStream(tab+1);
-					DOTAB;
+					DOTAB(cerr);
 					cerr <<"\t}" << std::endl;
 			} else if ((*it2)->StoredType == ST_LIST) {
 					cerr << "{" << std::endl;
@@ -629,8 +647,8 @@ void VarStorage_t::printToStream(int tab) {
 					ListVals::const_iterator lvit;
 					cout << "\t\tSelected:" << lv.getSelected() << std::endl;
 					for (lvit = lv.begin(); lvit != lv.end(); ++lvit) {
-						DOTAB;
-						cout << "\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
+						DOTAB(cerr);
+						cerr << "\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
 					}
 				    cerr << "\t}" << std::endl;
 			} else {
@@ -677,6 +695,15 @@ muscle::MessageRef VarStorage_t::toMuscle() {
 							DateMsg()->AddString("DATE", boost::posix_time::to_iso_string(boost::get<boost::posix_time::ptime>((*hvit).second)).c_str());
 							HashMsg()->AddMessage((*hvit).first.c_str(), DateMsg);
 						}
+					} else if ((*hvit).second.type() == typeid(ListOptions)) {
+							muscle::MessageRef ListMsg = muscle::GetMessageFromPool(ST_LIST);
+							ListOptions lv = boost::get<ListOptions>((*hvit).second);
+							int i = 0;
+							while (strlen(lv[i].desc) > 0) {
+								ListMsg()->AddString(boost::lexical_cast<std::string>(lv[i].index).c_str(), lv[i].desc);
+								i++;
+							}
+							HashMsg()->AddMessage((*hvit).first.c_str(), ListMsg);
 					} else {
 						cout << "Unknown Type: " << (*hvit).second.type().name() << std::endl;
 					}
@@ -897,29 +924,11 @@ uint32_t VarStorage_t::getListSize(std::string Fieldname, uint8_t pos) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 std::ostream& operator<<(std::ostream &os, const VarStorage &ptr) {
         os << *ptr.get();
 	return os;
 }
 
-
-#undef DOTAB
-int tab = 0;
-#define DOTAB for (int tabs = 0; tabs != tab; tabs++) stream << "\t"
 
 std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 	Variables_t vars = vs.Variables;
@@ -927,11 +936,11 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 	Vals::iterator it2;
 	int i;
 	for (it=vars.begin(); it != vars.end(); it++) {
-		DOTAB;
+		DOTAB(stream);
 		stream << "Variable: " << (*it).first << " size: " << (*it).second->size() << " Type: " << vs.getType((*it).second->front()) << std::endl;
 		i = 0;
 		for (it2 = (*it).second->begin(); it2 != (*it).second->end(); it2++) {
-			DOTAB;
+			DOTAB(stream);
 			stream << "\tPos: " << i++ << " Value: ";
 			if ((*it2)->StoredType == ST_STRING) {
 					stream << (*it2)->StrVal << std::endl;
@@ -946,12 +955,14 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 			} else if ((*it2)->StoredType == ST_HASH) {
 					stream << "Hash Variables:" <<  std::endl;
 					{
+						tab = tab +1;
 						HashVals hv = (*it2)->HashVal;
 						std::map<std::string, HashValsVariant_t>::const_iterator hvit;
 						for (hvit = hv.begin(); hvit != hv.end(); hvit++) {
-							DOTAB;
+							DOTAB(stream);
 							cout << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
 						}
+						tab = tab -1;
 					}
 			} else if ((*it2)->StoredType == ST_BOOL) {
 					stream << (*it2)->BoolVal << std::endl;
@@ -1112,9 +1123,25 @@ size_t ListVals::getSize() {
 
 std::ostream& operator<<(std::ostream &stream, const ListVals &lv) {
 	ListVals::const_iterator lvit;
-	stream << "Selected:" << lv.getSelected() << std::endl;
+	stream << "Selected: " << lv.getSelected() << " {" << std::endl;
 	for (lvit = lv.begin(); lvit != lv.end(); ++lvit) {
-		stream << (*lvit).first << "=" << (*lvit).second << std::endl;
+		DOTAB(stream);
+		stream << "\t\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
 	}
+	DOTAB(stream);
+	stream << "\t\t}";
+	return stream;
+}
+
+std::ostream& operator<<(std::ostream &stream, const ListOptions lv) {
+	stream << "{" << std::endl;
+	int i = 0;
+	while (strlen(lv[i].desc) > 0) {
+		DOTAB(stream);
+		stream << "\t\t\tKey: " << lv[i].index << " Value: " << lv[i].desc << std::endl;
+		i++;
+	}
+	DOTAB(stream);
+	stream << "\t\t}";
 	return stream;
 }

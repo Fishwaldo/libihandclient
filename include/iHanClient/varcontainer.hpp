@@ -17,6 +17,7 @@
 
 #include <boost/variant.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/serialization/list.hpp>
@@ -76,10 +77,26 @@ private:
 		EnumVals_t Vals;
 };
 
+typedef struct ListOptions_t {
+		int32_t index;
+		char desc[256];
+}ListOptions_t;
+
+
+#define CreateListOptions(name, size) ListOptions_t *name = new ListOptions_t[size+1]
+#define AddListOptions(name, pos, indexval, descval) name[pos].index = indexval; strncpy(name[pos].desc, descval, 256)
+#define FinishListOptions(name,pos) name[pos].index = -1; strncpy(name[pos].desc, "", 256)
+
+#define ListStackPointer(w, x) boost::shared_array<ListOptions_t> x_ptr(x, &null_deleter); \
+	w = x_ptr;
+
+
+
 /* forward Dec */
 class VarStorage_t;
 typedef boost::shared_ptr<VarStorage_t> VarStorage;
-typedef boost::variant<std::string, int, long, long long, float, boost::posix_time::ptime, ListVals > HashValsVariant_t;
+typedef boost::shared_array<ListOptions_t> ListOptions;
+typedef boost::variant<std::string, int, long, long long, float, boost::posix_time::ptime, ListOptions> HashValsVariant_t;
 typedef std::map<std::string, HashValsVariant_t> HashVals;
 
 
