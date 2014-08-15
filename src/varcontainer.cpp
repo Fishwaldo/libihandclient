@@ -177,7 +177,7 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 										   muscle::MessageFieldNameIterator lit = MyMsgRef()->GetFieldNameIterator();
 										   muscle::String listindex;
 										   muscle::String listvalue;
-										   ListOptions_t *lo = new ListOptions_t[MyMsgRef()->GetNumNames()];
+										   ListOptions_t *lo = new ListOptions_t[MyMsgRef()->GetNumNames()+1];
 										   int i = 0;
 										   for (; lit.HasData(); lit++ ) {
 											   listindex = lit.GetFieldName();
@@ -186,6 +186,8 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 											   strncpy(lo[i].desc, listvalue.Cstr(), 256);
 											   i++;
 										   }
+										   lo[i].index = -1;
+										   strncpy(lo[i].desc, "", 256);
 										   newHashVals[Hashfieldname.Cstr()] = (ListOptions)lo;
 									   }
 								   }
