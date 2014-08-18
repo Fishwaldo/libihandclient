@@ -216,7 +216,9 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 					   case ST_LIST: {
 						   muscle::String Listfieldname;
 						   uint32_t  Selected;
-						   ListVals newListVals;
+						   ListVals newListVals(new ListVals_t());
+						   //std::cout << newListVals << std::endl;
+						   //msgMsg()->PrintToStream();
 						   muscle::MessageFieldNameIterator hit = msgMsg()->GetFieldNameIterator();
 						   for (; hit.HasData(); hit++ ) {
 							   Listfieldname = hit.GetFieldName();
@@ -225,10 +227,10 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 							   if (Listfieldname == "__tt-Selected") {
 								   Selected = val;
 							   } else {
-								   newListVals.insertValue(val, Listfieldname.Cstr());
+								   newListVals->insertValue(val, Listfieldname.Cstr());
 							   }
 						   }
-						   newListVals.setSelected(Selected);
+						   newListVals->setSelected(Selected);
 						   this->addListValue_p(fieldname.Cstr(), newListVals);
 					   }
 				   }
@@ -438,7 +440,7 @@ StoredVals_t VarStorage_t::getValueP(std::string FieldName, StoredType_t type, u
 	if (this->Variables.find(FieldName) != this->Variables.end()) {
 		Vals *storedval = this->Variables[FieldName];
 		if (storedval->size() <= pos) {
-			iHanClient::Logging::LogError(std::string("Field " + FieldName + " only has " + lexical_cast<std::string>(storedval->size()) + " but " + lexical_cast<std::string>(pos) + " was asked for"));
+			iHanClient::Logging::LogError(std::string("Field " + FieldName + " only has " + lexical_cast<std::string>(storedval->size()) + " but " + lexical_cast<std::string>(pos).c_str() + " was asked for"));
 			BOOST_THROW_EXCEPTION(VS_Exception(OUT_OF_RANGE));
 		}
 		StoredVals_t SV = storedval->at(pos);
@@ -646,9 +648,9 @@ void VarStorage_t::printToStream(int tab) {
 			} else if ((*it2)->StoredType == ST_LIST) {
 					cerr << "{" << std::endl;
 					ListVals lv = (*it2)->ListVal;
-					ListVals::const_iterator lvit;
-					cout << "\t\tSelected:" << lv.getSelected() << std::endl;
-					for (lvit = lv.begin(); lvit != lv.end(); ++lvit) {
+					list_const_iterator lvit;
+					cout << "\t\tSelected:" << lv->getSelected() << std::endl;
+					for (lvit = lv->begin(); lvit != lv->end(); ++lvit) {
 						DOTAB(cerr);
 						cerr << "\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
 					}
@@ -729,11 +731,11 @@ muscle::MessageRef VarStorage_t::toMuscle() {
 				{
 					muscle::MessageRef ListMsg = muscle::GetMessageFromPool(ST_LIST);
 					ListVals lv = (*it2)->ListVal;
-					ListVals::const_iterator lvit;
-					for (lvit = lv.begin(); lvit != lv.end(); lvit++) {
+					list_const_iterator lvit;
+					for (lvit = lv->begin(); lvit != lv->end(); lvit++) {
 						ListMsg()->AddInt32((*lvit).second.c_str(), (*lvit).first);
 					}
-					ListMsg()->AddInt32("__tt-Selected", lv.getSelected());
+					ListMsg()->AddInt32("__tt-Selected", lv->getSelected());
 					newMsg()->AddMessage((*it).first.c_str(), ListMsg);
 				}
 			} else {
@@ -828,10 +830,13 @@ int VarStorage_t::addListValue_p(std::string FieldName, ListVals val) {
 bool VarStorage_t::addListValue(std::string Fieldname, uint32_t index, std::string val, uint8_t pos) {
 	/* see if the ListValue exists */
 	ListVals vals;
-	if (this->getSize(Fieldname) > 0) {
+	if (this->getSize(Fieldname) >= (unsigned int)pos + 1) {
 		this->getListValue_p(Fieldname, vals, pos);
+	} else {
+		/* create it */
+		vals.reset(new ListVals_t());
 	}
-	if (vals.insertValue(index, val)) {
+	if (vals->insertValue(index, val)) {
 		return (this->replaceListValue_p(Fieldname, vals, pos) >= 0 ? true : false);
 	} else {
 		return false;
@@ -846,7 +851,7 @@ bool VarStorage_t::delListValue(std::string Fieldname, uint32_t index, uint8_t p
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
 		return false;
 	}
-	if (vals.removeValue(index)) {
+	if (vals->removeValue(index)) {
 		return (this->replaceListValue_p(Fieldname, vals, pos) >= 0 ? true : false);
 	} else {
 		return false;
@@ -861,19 +866,19 @@ bool VarStorage_t::getListValue(std::string Fieldname, uint32_t index, std::stri
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
 		return false;
 	}
-	value = vals.getValue(index);
+	value = vals->getValue(index);
 	return true;
 }
 bool VarStorage_t::setListSelectedValue(std::string Fieldname, uint32_t index, uint8_t pos) {
 	/* see if the ListValue exists */
 	ListVals vals;
 	if (this->getSize(Fieldname) == 0) {
-		return false;
+		vals.reset(new ListVals_t());
 	}
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
 		return false;
 	}
-	if (vals.setSelected(index)) {
+	if (vals->setSelected(index)) {
 		return (this->replaceListValue_p(Fieldname, vals, pos) >= 0 ? true : false);
 	} else {
 		return false;
@@ -888,32 +893,30 @@ bool VarStorage_t::getListSelectedValue(std::string Fieldname, uint32_t &value, 
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
 		return false;
 	}
-	value = vals.getSelected();
+	value = vals->getSelected();
 	return true;
 }
 list_const_iterator VarStorage_t::getListIterBegin(std::string Fieldname, uint8_t pos) {
 	/* see if the ListValue exists */
 	ListVals vals;
 	if (this->getSize(Fieldname) == 0) {
-		std::cout << "size wrong" << std::endl;
-		return vals.end();
+		return vals->end();
 	}
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
-		std::cout << "Can't get List" << std::endl;
-		return vals.end();
+		return vals->end();
 	}
-	return vals.begin();
+	return vals->begin();
 }
 list_const_iterator VarStorage_t::getListIterEnd(std::string Fieldname, uint8_t pos) {
 	/* see if the ListValue exists */
 	ListVals vals;
 	if (this->getSize(Fieldname) == 0) {
-		return vals.end();
+		return vals->end();
 	}
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
-		return vals.end();
+		return vals->end();
 	}
-	return vals.end();
+	return vals->end();
 }
 uint32_t VarStorage_t::getListSize(std::string Fieldname, uint8_t pos) {
 	/* see if the ListValue exists */
@@ -924,9 +927,39 @@ uint32_t VarStorage_t::getListSize(std::string Fieldname, uint8_t pos) {
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
 		return 0;
 	}
-	return vals.getSize();
+	return vals->getSize();
 }
 
+
+std::ostream& operator<<(std::ostream &os, const ListVals &ptr) {
+        os << *ptr.get();
+	return os;
+}
+
+std::ostream& operator<<(std::ostream &stream, const ListVals_t &lv) {
+	list_const_iterator lvit;
+	stream << "Selected: " << lv.getSelected() << " {" << std::endl;
+	for (lvit = lv.begin(); lvit != lv.end(); ++lvit) {
+		DOTAB(stream);
+		stream << "\t\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
+	}
+	DOTAB(stream);
+	stream << "\t\t}";
+	return stream;
+}
+
+std::ostream& operator<<(std::ostream &stream, const ListOptions lv) {
+	stream << "{" << std::endl;
+	int i = 0;
+	while (strlen(lv[i].desc) > 0) {
+		DOTAB(stream);
+		stream << "\t\t\tKey: " << lv[i].index << " Value: " << lv[i].desc << std::endl;
+		i++;
+	}
+	DOTAB(stream);
+	stream << "\t\t}";
+	return stream;
+}
 
 std::ostream& operator<<(std::ostream &os, const VarStorage &ptr) {
         os << *ptr.get();
@@ -981,7 +1014,8 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 					tab = tab -1;
 			} else if ((*it2)->StoredType == ST_LIST) {
 					stream << "{" << std::endl;
-					stream << "\t\t" << (*it2)->ListVal << std::endl;
+					ListVals lv = (*it2)->ListVal;
+					stream << "\t\t" << lv << std::endl;
 					stream << "\t}" << std::endl;
 			} else {
 					stream << "Unprintable Type" << std::endl;
@@ -1086,18 +1120,17 @@ void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName)
 
 
 
-bool ListVals::setSelected(int32_t value) {
+bool ListVals_t::setSelected(int32_t value) {
 	if (this->Vals.find(value) != this->Vals.end()) {
 		this->Selected = value;
 		return true;
 	}
-//	std::cout << *this << std::endl;
 	return false;
 }
-int32_t ListVals::getSelected() const {
+int32_t ListVals_t::getSelected() const {
 	return this->Selected;
 }
-bool ListVals::insertValue(int32_t value, std::string desc) {
+bool ListVals_t::insertValue(int32_t value, std::string desc) {
 	if ((value > 0) && (this->Vals.find(value) == this->Vals.end())) {
 		this->Vals.insert(std::pair<int32_t, std::string>(value, desc));
 		return true;
@@ -1105,7 +1138,7 @@ bool ListVals::insertValue(int32_t value, std::string desc) {
 	return false;
 }
 
-bool ListVals::removeValue(int32_t value) {
+bool ListVals_t::removeValue(int32_t value) {
 	if (this->Vals.find(value) != this->Vals.end()) {
 		this->Vals.erase(value);
 		if (this->Selected == value)
@@ -1114,38 +1147,15 @@ bool ListVals::removeValue(int32_t value) {
 	}
 	return false;
 }
-std::string ListVals::getValue(int32_t value) {
+std::string ListVals_t::getValue(int32_t value) {
 	if (this->Vals.find(value) != this->Vals.end()) {
 		return this->Vals.at(value);
 	}
 	return "";
 }
-size_t ListVals::getSize() {
+size_t ListVals_t::getSize() {
 	return this->Vals.size();
 }
 
 
-std::ostream& operator<<(std::ostream &stream, const ListVals &lv) {
-	ListVals::const_iterator lvit;
-	stream << "Selected: " << lv.getSelected() << " {" << std::endl;
-	for (lvit = lv.begin(); lvit != lv.end(); ++lvit) {
-		DOTAB(stream);
-		stream << "\t\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
-	}
-	DOTAB(stream);
-	stream << "\t\t}";
-	return stream;
-}
 
-std::ostream& operator<<(std::ostream &stream, const ListOptions lv) {
-	stream << "{" << std::endl;
-	int i = 0;
-	while (strlen(lv[i].desc) > 0) {
-		DOTAB(stream);
-		stream << "\t\t\tKey: " << lv[i].index << " Value: " << lv[i].desc << std::endl;
-		i++;
-	}
-	DOTAB(stream);
-	stream << "\t\t}";
-	return stream;
-}

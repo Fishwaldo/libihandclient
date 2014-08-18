@@ -53,15 +53,15 @@ int main(int argc, char *argv[]) {
 	Vars->addListValue("LIST", 2, "test2");
 	Vars->setListSelectedValue("LIST", 2);
 
-	cout << *(Vars);
+	//cout << *(Vars);
 	muscle::MessageRef test = Vars->toMuscle();
-	test()->PrintToStream();
+	//test()->PrintToStream();
 
 	uint32 flatsize= test()->FlattenedSize();
 	uint8 *flatmsg = (uint8*)malloc(flatsize+10);
 	test()->Flatten(flatmsg);
 
-	std::cout << flatsize << std::endl;
+	//std::cout << flatsize << std::endl;
 
 	muscle::Message test2;
 	test2.Unflatten(flatmsg, flatsize);

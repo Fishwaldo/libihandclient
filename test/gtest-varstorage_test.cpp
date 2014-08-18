@@ -67,7 +67,6 @@ namespace testing {
 						 this->Vars->addListValue("ListValue", 2, "ListValue 2");
 						 this->Vars->setListSelectedValue("ListValue", 2);
 
-
 						 /* test Array Handling */
 						 this->Vars->addIntValue("MULTIINT", (int)456);
 						 this->Vars->addIntValue("MULTIINT", (int)789);
@@ -83,7 +82,7 @@ namespace testing {
 						 this->Vars->addBoolValue("MULTIBOOL", (bool)true);
 						 this->Vars->addTimeValue("MULTIDATE", boost::posix_time::ptime(boost::posix_time::time_from_string("2010-01-10 10:23:23")));
 						 this->Vars->addTimeValue("MULTIDATE", boost::posix_time::ptime(boost::posix_time::time_from_string("2011-02-28 11:33:43")));
-
+						 //std::cout << "Creating Setup" << this->Vars << std::endl;
 				     }
 
 				VarStorage Vars;
@@ -93,9 +92,10 @@ namespace testing {
 				     virtual void SetUp() {
 						 //this->Vars &= new VarStorage();
 						iHanClient::Logging::Log::Create("", true, iHanClient::Logging::LogLevel_Debug);
-						Vals.insertValue(1, "test");
-						Vals.insertValue(2, "test2");
-						Vals.setSelected(1);
+						Vals.reset(new ListVals_t());
+						Vals->insertValue(1, "test");
+						Vals->insertValue(2, "test2");
+						Vals->setSelected(1);
 				     }
 
 				ListVals Vals;
@@ -575,24 +575,24 @@ namespace testing {
 			}
 
 			TEST_F(ListValueTest, addEntry) {
-				ListVals lv;
-				EXPECT_TRUE(lv.insertValue(1, "test"));
+				ListVals lv(new ListVals_t());
+				EXPECT_TRUE(lv->insertValue(1, "test"));
 			}
 			TEST_F(ListValueTest, getEntry) {
-				EXPECT_STREQ("test", this->Vals.getValue(1).c_str());
+				EXPECT_STREQ("test", this->Vals->getValue(1).c_str());
 			}
 			TEST_F(ListValueTest, delEntry) {
-				EXPECT_TRUE(this->Vals.removeValue(2));
-				EXPECT_EQ(this->Vals.getSize(), 1);
-				EXPECT_STREQ("", this->Vals.getValue(2).c_str());
+				EXPECT_TRUE(this->Vals->removeValue(2));
+				EXPECT_EQ(this->Vals->getSize(), 1);
+				EXPECT_STREQ("", this->Vals->getValue(2).c_str());
 			}
 			TEST_F(ListValueTest, invalidSelection) {
-				EXPECT_FALSE(this->Vals.setSelected(10));
+				EXPECT_FALSE(this->Vals->setSelected(10));
 			}
 			TEST_F(ListValueTest, validSelection) {
-				EXPECT_TRUE(this->Vals.setSelected(2));
-				EXPECT_EQ(this->Vals.getSelected(), 2);
-				EXPECT_STREQ("test2", this->Vals.getValue(2).c_str());
+				EXPECT_TRUE(this->Vals->setSelected(2));
+				EXPECT_EQ(this->Vals->getSelected(), 2);
+				EXPECT_STREQ("test2", this->Vals->getValue(2).c_str());
 			}
 
 

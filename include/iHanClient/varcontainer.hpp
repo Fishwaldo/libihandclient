@@ -50,9 +50,11 @@ using namespace std;
 typedef std::map<int32_t, std::string> EnumVals_t;
 typedef std::map<int32_t, std::string>::const_iterator list_const_iterator;
 
-class ListVals {
+class ListVals_t : boost::noncopyable
+//class ListVals_t
+{
 	public:
-		~ListVals() {std::cout << "goodbye" << std::endl;}
+		//~ListVals_t() {//std::cout << "goodbye" << std::endl;}
 		bool setSelected(int32_t);
 		int32_t getSelected() const;
 		bool insertValue(int32_t, std::string);
@@ -60,11 +62,12 @@ class ListVals {
 		std::string getValue(int32_t);
 		size_t getSize();
 		typedef EnumVals_t::const_iterator const_iterator;
-		const_iterator begin() const { return this->Vals.begin(); };
-		const_iterator end() const { return this->Vals.end(); };
+		list_const_iterator begin() const { return this->Vals.begin(); };
+		list_const_iterator end() const { return this->Vals.end(); };
 	private:
 		friend class boost::serialization::access;
-		friend std::ostream& operator<<(std::ostream&, const ListVals &);
+		friend std::ostream& operator<<(std::ostream&, const ListVals_t &);
+
 
 		template<class Archive>
 		void serialize(Archive & ar,const unsigned int version)
@@ -110,6 +113,7 @@ BOOST_IS_BITWISE_SERIALIZABLE(ListOptions_t)
 /* forward Dec */
 class VarStorage_t;
 typedef boost::shared_ptr<VarStorage_t> VarStorage;
+typedef boost::shared_ptr<ListVals_t> ListVals;
 typedef boost::shared_array<ListOptions_t> ListOptions;
 typedef boost::variant<std::string, int, long, long long, float, boost::posix_time::ptime, ListOptions> HashValsVariant_t;
 typedef std::map<std::string, HashValsVariant_t> HashVals;
