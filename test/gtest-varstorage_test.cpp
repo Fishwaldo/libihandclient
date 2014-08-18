@@ -560,6 +560,19 @@ namespace testing {
 				EXPECT_TRUE(newVars->delValue("MULTIBOOL"));
 				EXPECT_EQ(newVars->getSize("MULTIBOOL"), 0);
 			}
+			TEST_F(VarContainerTest, ListIterator) {
+				list_const_iterator iter;
+				ASSERT_GT(this->Vars->getListSize("ListValue"), 0);
+				iter = this->Vars->getListIterBegin("ListValue");
+				ASSERT_NE(iter, this->Vars->getListIterEnd("ListValue")) << "Invalid Iter";
+				EXPECT_EQ((*iter).first, 1);
+				EXPECT_STREQ((*iter).second.c_str(), "ListValue 1");
+				iter++;
+				EXPECT_EQ((*iter).first, 2);
+				EXPECT_STREQ((*iter).second.c_str(), "ListValue 2");
+				iter++;
+				EXPECT_EQ(iter, this->Vars->getListIterEnd("ListValue")) << "Invalid End Iter";
+			}
 
 			TEST_F(ListValueTest, addEntry) {
 				ListVals lv;
@@ -581,6 +594,7 @@ namespace testing {
 				EXPECT_EQ(this->Vals.getSelected(), 2);
 				EXPECT_STREQ("test2", this->Vals.getValue(2).c_str());
 			}
+
 
 
 		}  // namespace

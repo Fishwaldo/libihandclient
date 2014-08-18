@@ -52,6 +52,7 @@ typedef std::map<int32_t, std::string>::const_iterator list_const_iterator;
 
 class ListVals {
 	public:
+		~ListVals() {std::cout << "goodbye" << std::endl;}
 		bool setSelected(int32_t);
 		int32_t getSelected() const;
 		bool insertValue(int32_t, std::string);

@@ -895,9 +895,11 @@ list_const_iterator VarStorage_t::getListIterBegin(std::string Fieldname, uint8_
 	/* see if the ListValue exists */
 	ListVals vals;
 	if (this->getSize(Fieldname) == 0) {
+		std::cout << "size wrong" << std::endl;
 		return vals.end();
 	}
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
+		std::cout << "Can't get List" << std::endl;
 		return vals.end();
 	}
 	return vals.begin();
@@ -911,7 +913,7 @@ list_const_iterator VarStorage_t::getListIterEnd(std::string Fieldname, uint8_t 
 	if (!this->getListValue_p(Fieldname, vals, pos)) {
 		return vals.end();
 	}
-	return vals.begin();
+	return vals.end();
 }
 uint32_t VarStorage_t::getListSize(std::string Fieldname, uint8_t pos) {
 	/* see if the ListValue exists */
