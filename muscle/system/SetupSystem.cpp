@@ -148,8 +148,8 @@ SanitySetupSystem :: SanitySetupSystem()
    if (sizeof(int64)  != 8) GoInsane("sizeof(int64)  != 8");
    if (sizeof(float)  != 4) GoInsane("sizeof(float)  != 4");
    if (sizeof(double) != 8) GoInsane("sizeof(double) != 8");
-   if (sizeof(uintptr) != sizeof(void *)) GoInsane("sizeof(uintptr) != sizeof(void *)");
-   if (sizeof(ptrdiff) != sizeof(uintptr)) GoInsane("sizeof(ptrdiff) != sizeof(uintptr)");
+//   if (sizeof(uintptr) != sizeof(void *)) GoInsane("sizeof(uintptr) != sizeof(void *)");
+//   if (sizeof(ptrdiff) != sizeof(uintptr)) GoInsane("sizeof(ptrdiff) != sizeof(uintptr)");
 
    // Make sure our endian-ness info is correct
    static const uint32 one = 1;
