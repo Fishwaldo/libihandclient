@@ -49,7 +49,7 @@ namespace iHanClient {
 		class i_LogImpl
 		{
 			public:
-				i_LogImpl(std::string const& _filename, bool const _bConsoleOutput, LogLevel const _saveLevel) {}
+				i_LogImpl(std::string const& _filename, bool const _bConsoleOutput, LogLevel const _saveLevel) { (void)_filename; (void)_bConsoleOutput; (void)_saveLevel;}
 				virtual ~i_LogImpl() {};
 				virtual void Write( LogLevel _level, std::string ) = 0;
 				virtual void SetLoggingState( LogLevel _saveLevel) = 0;

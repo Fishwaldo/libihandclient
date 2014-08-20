@@ -215,7 +215,7 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 					   break;
 					   case ST_LIST: {
 						   muscle::String Listfieldname;
-						   uint32_t  Selected;
+						   uint32_t  Selected = 0;
 						   ListVals newListVals(new ListVals_t());
 						   //std::cout << newListVals << std::endl;
 						   //msgMsg()->PrintToStream();
@@ -459,6 +459,7 @@ bool VarStorage_t::getCharValue(std::string FieldName, char *value, uint8_t pos)
 		value = (char *)Result.c_str();
 		return true;
 	}
+	value = NULL;
 	return false;
 }
 

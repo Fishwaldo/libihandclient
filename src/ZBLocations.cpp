@@ -124,6 +124,14 @@ const char DeviceTypeStrings[][30] = {
 	{ "PIC32 Device"},
 	{ "Light Switch"},
 	{ "Presure Sensor"},
+	{ "ZWave Controller"},
+	{ "MultiLevel Sensor"},
+	{ "Meter"},
+	{ "Generic Device"},
+	{ "Door Lock"},
+	{ "User Pin"},
+	{ "RGBW Light"},
+	{ "Light Dimmer"}
 };
 
 

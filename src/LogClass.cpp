@@ -202,6 +202,7 @@ LogImpl::LogImpl
 ):
 i_LogImpl(_filename,_bConsoleOutput, _saveLevel)
 {
+        (void)_filename;
 	m_saveLevel = _saveLevel;
 	m_bConsoleOutput = _bConsoleOutput;
 }
@@ -286,6 +287,7 @@ void LogImpl::SetLogFileName
 		std::string _filename
 )
 {
+    (void)_filename;
 }
 
 
