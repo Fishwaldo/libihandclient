@@ -33,7 +33,13 @@
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/date_time/posix_time/time_serialize.hpp>
 #include <boost/date_time/gregorian/greg_serialize.hpp>
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <boost/archive/text_oarchive.hpp>
+#ifdef __clang__
+#pragma clang diagnostic warning "-Wunused-parameter"
+#endif
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
@@ -72,6 +78,7 @@ class ListVals_t : boost::noncopyable
 		template<class Archive>
 		void serialize(Archive & ar,const unsigned int version)
 		{
+				(void)version;
 				if (Archive::is_loading::value) {
 					this->Selected = 0;
 					this->Vals.clear();
@@ -89,6 +96,7 @@ typedef struct ListOptions_t {
 		template<class Archive>
 		void serialize(Archive & ar, const unsigned int version)
 		{
+				(void)version;
 				//			if (Archive::is_loading::value) {
 				//				g.Selected = 0;
 				//				g.Vals.clear();
@@ -247,6 +255,7 @@ class VarStorage_t {
 std::ostream& operator<<(std::ostream&, const VarStorage_t &);
 std::ostream& operator<<(std::ostream &os, const VarStorage &ptr);
 template<class Archive> void VarStorage_t::serialize(Archive & ar, const unsigned int version) {
+		(void)version;
 		ar & boost::serialization::make_nvp("VarContainer", this->Variables);
 }
 
@@ -278,6 +287,7 @@ namespace boost {
 		template<class Archive>
 		void serialize(Archive & ar, StoredVals_t & g, const unsigned int version)
 		{
+				(void)version;
 				if (Archive::is_loading::value) g.reset(new StoredVals_r);
 				ar & make_nvp("StoredType", g->StoredType);
 				switch (g->StoredType) {
