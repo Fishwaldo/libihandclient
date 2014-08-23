@@ -643,17 +643,20 @@ void VarStorage_t::printToStream(int tab) {
 					cerr << (*it2)->DateTimeVal << std::endl;
 			} else if ((*it2)->StoredType == ST_VARSTORAGE) {
 					cerr << "{" << std::endl;
-					(*it2)->VarVal->printToStream(tab+1);
+					if ((*it2)->VarVal.use_count() > 0)
+						(*it2)->VarVal->printToStream(tab+1);
 					DOTAB(cerr);
 					cerr <<"\t}" << std::endl;
 			} else if ((*it2)->StoredType == ST_LIST) {
 					cerr << "{" << std::endl;
-					ListVals lv = (*it2)->ListVal;
-					list_const_iterator lvit;
-					cout << "\t\tSelected:" << lv->getSelected() << std::endl;
-					for (lvit = lv->begin(); lvit != lv->end(); ++lvit) {
-						DOTAB(cerr);
-						cerr << "\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
+					if ((*it2)->ListVal.use_count() > 0) {
+						ListVals lv = (*it2)->ListVal;
+						list_const_iterator lvit;
+						cout << "\t\tSelected:" << lv->getSelected() << std::endl;
+						for (lvit = lv->begin(); lvit != lv->end(); ++lvit) {
+							DOTAB(cerr);
+							cerr << "\t\t" << (*lvit).first << "=" << (*lvit).second << std::endl;
+						}
 					}
 				    cerr << "\t}" << std::endl;
 			} else {
@@ -1009,14 +1012,16 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 			} else if ((*it2)->StoredType == ST_VARSTORAGE) {
 					tab = tab +1;
 					stream << "{" << std::endl;
-					stream << (*it2)->VarVal;
+					if ((*it2)->VarVal.use_count() > 0)
+						stream << (*it2)->VarVal;
 					//DOTAB;
 					stream <<"\t}" << std::endl;
 					tab = tab -1;
 			} else if ((*it2)->StoredType == ST_LIST) {
 					stream << "{" << std::endl;
 					ListVals lv = (*it2)->ListVal;
-					stream << "\t\t" << lv << std::endl;
+					if ((*it2)->ListVal.use_count() > 0)
+						stream << "\t\t" << lv << std::endl;
 					stream << "\t}" << std::endl;
 			} else {
 					stream << "Unprintable Type" << std::endl;
