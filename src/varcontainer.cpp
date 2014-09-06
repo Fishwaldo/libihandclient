@@ -33,7 +33,7 @@ private:
 
 
 
-VarStorage_t::VarStorage_t() {
+VarStorage_t::VarStorage_t() : m_what(0) {
 }
 
 VarStorage_t::VarStorage_t(muscle::MessageRef msg) {
@@ -60,12 +60,14 @@ VarStorage_t::VarStorage_t(VarStorage_t  const &other) {
 		std::string name = it->first;
 		this->Variables[name] = newvals;
 	}
+	this->m_what = other.m_what;
 }
 
 void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 	muscle::String fieldname;
 	uint32 type, size, i;
 	muscle::MessageFieldNameIterator it = msg()->GetFieldNameIterator();
+	this->m_what = msg()->what;
 	for (; it.HasData(); it++ ) {
 		fieldname = it.GetFieldName();
 		msg()->GetInfo(fieldname, &type, &size);
@@ -217,8 +219,6 @@ void VarStorage_t::importMuscleMsg(muscle::MessageRef msg) {
 						   muscle::String Listfieldname;
 						   uint32_t  Selected = 0;
 						   ListVals newListVals(new ListVals_t());
-						   //std::cout << newListVals << std::endl;
-						   //msgMsg()->PrintToStream();
 						   muscle::MessageFieldNameIterator hit = msgMsg()->GetFieldNameIterator();
 						   for (; hit.HasData(); hit++ ) {
 							   Listfieldname = hit.GetFieldName();
@@ -258,6 +258,15 @@ VarStorage_t::~VarStorage_t() {
 	}
 	this->Variables.clear();
 }
+uint64_t VarStorage_t::getWhat() {
+	return this->m_what;
+}
+void VarStorage_t::setWhat(uint64_t what) {
+	this->m_what = what;
+}
+
+
+
 int VarStorage_t::addValueP(std::string FieldName, StoredVals_t SV) {
 	if (this->Variables.find(FieldName) != this->Variables.end()) {
 		if (this->Variables[FieldName]->front()->StoredType == SV->StoredType) {
@@ -610,6 +619,7 @@ void VarStorage_t::printToStream(int tab) {
 	std::map<std::string, Vals *>::iterator it;
 	Vals::iterator it2;
 	int i;
+	cerr << "What: " << this->m_what << std::endl;
 	for (it=this->Variables.begin(); it != this->Variables.end(); it++) {
 		DOTAB(cerr);
 		cerr << "Variable: " << (*it).first << " size: " << (*it).second->size() << " Type: " << getType((*it).second->front()) << std::endl;
@@ -670,6 +680,7 @@ muscle::MessageRef VarStorage_t::toMuscle() {
 	std::map<std::string, Vals *>::iterator it;
 	Vals::iterator it2;
 	muscle::MessageRef newMsg = muscle::GetMessageFromPool(0);
+	newMsg()->what = this->m_what;
 	for (it=this->Variables.begin(); it != this->Variables.end(); it++) {
 		for (it2 = (*it).second->begin(); it2 != (*it).second->end(); it2++) {
 			if ((*it2)->StoredType == ST_STRING) {
@@ -976,6 +987,7 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 	Variables_t::iterator it;
 	Vals::iterator it2;
 	int i;
+	stream << "What: " << vs.m_what << std::endl;
 	for (it=vars.begin(); it != vars.end(); it++) {
 		DOTAB(stream);
 		stream << "Variable: " << (*it).first << " size: " << (*it).second->size() << " Type: " << vs.getType((*it).second->front()) << std::endl;

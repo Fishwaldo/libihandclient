@@ -37,6 +37,7 @@ namespace testing {
 						 //this->Vars &= new VarStorage();
 						 iHanClient::Logging::Log::Create("", true, iHanClient::Logging::LogLevel_Debug);
 						 this->Vars.reset(new VarStorage_t());
+						 this->Vars->setWhat(22);
 						 this->Vars->addIntValue("INT", (int)123);
 						 this->Vars->addStringValue("STRING", (std::string)"String");
 						 this->Vars->addLongValue("LONG", (long)-1);
@@ -101,7 +102,9 @@ namespace testing {
 				ListVals Vals;
 
 			};
-
+			TEST_F(VarContainerTest, TestWhatValue) {
+				EXPECT_EQ(Vars->getWhat(), 22);
+			}
 			TEST_F(VarContainerTest, ReturnsTrueForCountItems) {
 				EXPECT_EQ(Vars->getSize(), 17);
 			}
@@ -353,6 +356,7 @@ namespace testing {
 
 			TEST_F(VarContainerTest, CopyConstructor) {
 				 VarContainerCopy(newvals, this->Vars);
+				 EXPECT_EQ(newvals->getWhat(), 22);
 				 this->Vars->addIntValue("INT", (int)123);
 				 {
 					 int oldval, newval;
@@ -430,6 +434,7 @@ namespace testing {
 				boost::archive::xml_iarchive ia(ifs);
 				ia >> BOOST_SERIALIZATION_NVP(newVars);
 				ifs.close();
+				EXPECT_EQ(newVars->getWhat(), 22);
 				EXPECT_EQ(newVars->getSize(),17);
 				int i;
 				newVars->getIntValue("INT", i);

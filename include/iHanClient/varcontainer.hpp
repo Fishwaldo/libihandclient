@@ -60,34 +60,34 @@ class ListVals_t : boost::noncopyable
 //class ListVals_t
 {
 	public:
-		//~ListVals_t() {//std::cout << "goodbye" << std::endl;}
-		bool setSelected(int32_t);
-		int32_t getSelected() const;
-		bool insertValue(int32_t, std::string);
-		bool removeValue(int32_t);
-		std::string getValue(int32_t);
-		size_t getSize();
-		typedef EnumVals_t::const_iterator const_iterator;
-		list_const_iterator begin() const { return this->Vals.begin(); };
-		list_const_iterator end() const { return this->Vals.end(); };
+	//~ListVals_t() {//std::cout << "goodbye" << std::endl;}
+	bool setSelected(int32_t);
+	int32_t getSelected() const;
+	bool insertValue(int32_t, std::string);
+	bool removeValue(int32_t);
+	std::string getValue(int32_t);
+	size_t getSize();
+	typedef EnumVals_t::const_iterator const_iterator;
+	list_const_iterator begin() const { return this->Vals.begin(); };
+	list_const_iterator end() const { return this->Vals.end(); };
 	private:
-		friend class boost::serialization::access;
-		friend std::ostream& operator<<(std::ostream&, const ListVals_t &);
+	friend class boost::serialization::access;
+	friend std::ostream& operator<<(std::ostream&, const ListVals_t &);
 
 
-		template<class Archive>
-		void serialize(Archive & ar,const unsigned int version)
-		{
-				(void)version;
-				if (Archive::is_loading::value) {
-					this->Selected = 0;
-					this->Vals.clear();
-				}
-				ar & boost::serialization::make_nvp("Selected", this->Selected);
-				ar & boost::serialization::make_nvp("Vals", this->Vals);
-		}
-		int32_t Selected;
-		EnumVals_t Vals;
+	template<class Archive>
+	void serialize(Archive & ar,const unsigned int version)
+	{
+			(void)version;
+			if (Archive::is_loading::value) {
+				this->Selected = 0;
+				this->Vals.clear();
+			}
+			ar & boost::serialization::make_nvp("Selected", this->Selected);
+			ar & boost::serialization::make_nvp("Vals", this->Vals);
+	}
+	int32_t Selected;
+	EnumVals_t Vals;
 };
 
 typedef struct ListOptions_t {
@@ -176,6 +176,8 @@ class VarStorage_t {
 		VarStorage_t(VarStorage_t  const &other);
 		~VarStorage_t();
 		void operator()(muscle::MessageRef msg);
+		uint64_t getWhat();
+		void setWhat(uint64_t what);
 		int addCharValue(std::string FieldName, char *);
 		int addStringValue(std::string FieldName, std::string val);
 		int addIntValue(std::string FieldName, int val);
@@ -244,7 +246,7 @@ class VarStorage_t {
 		int replaceValueP(std::string FieldName, StoredVals_t val, uint8_t pos);
 
 
-
+		uint32_t m_what;
 		StoredVals_t getValueP(std::string FieldName, StoredType_t type, uint8_t pos);
 		Variables_t Variables;
 };
@@ -257,6 +259,7 @@ std::ostream& operator<<(std::ostream &os, const VarStorage &ptr);
 template<class Archive> void VarStorage_t::serialize(Archive & ar, const unsigned int version) {
 		(void)version;
 		ar & boost::serialization::make_nvp("VarContainer", this->Variables);
+		ar & boost::serialization::make_nvp("What", this->m_what);
 }
 
 void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName);
