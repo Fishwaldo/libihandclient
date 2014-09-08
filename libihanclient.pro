@@ -13,6 +13,7 @@
 SOURCES += $$PWD/src/LogClass.cpp \
     $$PWD/src/varcontainer.cpp \
     $$PWD/src/ZBLocations.cpp \
+    $$PWD/src/VariableTypes.cpp \
     $$PWD/muscle/message/Message.cpp \
     $$PWD/muscle/util/ByteBuffer.cpp \
     $$PWD/muscle/util/Directory.cpp \
@@ -30,6 +31,7 @@ HEADERS += $$PWD/include/iHanClient/DeviceTypes.hpp \
     $$PWD/include/iHanClient/LogClass.hpp \
     $$PWD/include/iHanClient/MsgTypes.hpp \
     $$PWD/include/iHanClient/varcontainer.hpp \
+    $$PWD/include/iHanClient/VariableTypes.hpp \
     $$PWD/include/iHanClient/ZBHAProfiles.hpp \
     $$PWD/include/iHanClient/ZBLocations.hpp \
     $$PWD/muscle/message/Message.h \

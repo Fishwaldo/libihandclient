@@ -42,6 +42,8 @@ namespace iHanClient {
 class VarTypeHelper {
 	public:
 		static VarTypeHelper *Get();
+		static VarTypeHelper *Create(HashVals vars);
+		static void Destroy();
 		HashVals VarTypeToVarStorage();
 		std::string VarTypetoName(uint32_t id);
 		uint32_t InsertVarType(std::string name);
@@ -220,10 +222,11 @@ class VarTypeHelper {
 		    /* Water Flow - US Galons */
 		    CT_WATERFLOW_USG,
 		    /* End of List */
-		    CT_ENDOFLIST
+		    CT_ENDOFLIST = 20000
 		} ConfigType;
 	private:
 		VarTypeHelper();
+		VarTypeHelper(HashVals vars);
 		virtual ~VarTypeHelper();
 		VarTypeHelper(VarTypeHelper const&);
 		VarTypeHelper & operator=(VarTypeHelper const&);

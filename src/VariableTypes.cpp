@@ -144,6 +144,16 @@ namespace iHanClient {
 		return instance;
 	}
 
+	VarTypeHelper *VarTypeHelper::Create(HashVals vars) {
+		if (instance)
+			delete instance;
+		instance = new VarTypeHelper(vars);
+		return instance;
+	}
+
+	void VarTypeHelper::Destroy() {
+		delete instance;
+	}
 
 
 	VarTypeHelper::VarTypeHelper() : customid(1000){
@@ -152,6 +162,17 @@ namespace iHanClient {
 			this->mapping.insert(std::pair<uint32_t, std::string>(VarTypes[i].id, VarTypes[i].name));
 		}
 	}
+
+	VarTypeHelper::VarTypeHelper(HashVals vals) : customid(1000) {
+		//std::cout << vals << std::endl;
+		ListOptions lv = boost::get<ListOptions>(vals["VarType"]);
+		int i = 0;
+		while (lv[i].index != -1) {
+			this->mapping.insert(std::pair<uint32_t, std::string>(lv[i].index, lv[i].desc));
+			i++;
+		}
+	}
+
 
 	VarTypeHelper::~VarTypeHelper() {
 
