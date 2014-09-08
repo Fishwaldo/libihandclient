@@ -5,7 +5,7 @@ AM_LDFLAGS = $(BOOST_LDFLAGS) $(BOOST_ASIO_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(B
 check_PROGRAMS = gtest_all_test
 TESTS_ENVIROMENT = env GTEST_OUTPUT=@GTEST_OUTPUT@/libihanclient-test.xml
 TESTS = gtest_all_test
-gtest_all_test_SOURCES = gtest-varstorage_test.cpp gtest/gtest-all.cc gtest/gtest_main.cc 
+gtest_all_test_SOURCES = gtest-varstorage_test.cpp gtest-VariableTypes.cpp gtest/gtest-all.cc gtest/gtest_main.cc 
 gtest_all_test_LDADD = $(abs_builddir)/../src/libihanclient.la
 noinst_HEADERS = gtest/gtest.h
 clean-local:

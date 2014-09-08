@@ -1,2 +1,2 @@
-nobase_include_HEADERS = iHanClient/MsgTypes.hpp iHanClient/ZBLocations.hpp iHanClient/ZBHAProfiles.hpp iHanClient/DeviceTypes.hpp iHanClient/varcontainer.hpp iHanClient/LogClass.hpp
+nobase_include_HEADERS = iHanClient/MsgTypes.hpp iHanClient/ZBLocations.hpp iHanClient/ZBHAProfiles.hpp iHanClient/DeviceTypes.hpp iHanClient/varcontainer.hpp iHanClient/LogClass.hpp iHanClient/VariableTypes.hpp
 noinst_HEADERS  = win32_support.hpp
