@@ -619,6 +619,7 @@ void VarStorage_t::printToStream(int tab) {
 	std::map<std::string, Vals *>::iterator it;
 	Vals::iterator it2;
 	int i;
+	DOTAB(cerr);
 	cerr << "What: " << this->m_what << std::endl;
 	for (it=this->Variables.begin(); it != this->Variables.end(); it++) {
 		DOTAB(cerr);
@@ -987,6 +988,7 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 	Variables_t::iterator it;
 	Vals::iterator it2;
 	int i;
+	DOTAB(stream);
 	stream << "What: " << vs.m_what << std::endl;
 	for (it=vars.begin(); it != vars.end(); it++) {
 		DOTAB(stream);

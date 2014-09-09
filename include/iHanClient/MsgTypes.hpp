@@ -212,7 +212,8 @@ enum PROTOCOL_TYPES {
 };
 
 enum ClientCapabilities {
-	CLNTCAP_FLAG_VARTYPE = 0x01
+	CLNTCAP_FLAG_VARTYPE = 0x01,
+	CLNTCAP_FLAG_TERMS = 0x03		/* Combination of VARTYPES and Terms, hence 3 not 2 */
 };
 
 #endif
