@@ -131,7 +131,8 @@ const char DeviceTypeStrings[][30] = {
 	{ "Door Lock"},
 	{ "User Pin"},
 	{ "RGBW Light"},
-	{ "Light Dimmer"}
+	{ "Light Dimmer"},
+	{ "Fixed Scene"}
 };
 
 
