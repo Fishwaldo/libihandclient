@@ -109,7 +109,7 @@ typedef struct ListOptions_t {
 
 BOOST_IS_BITWISE_SERIALIZABLE(ListOptions_t)
 
-#define CreateListOptions(name, size) ListOptions_t *name = new ListOptions_t[size+1]
+#define CreateListOptions(name, size) ListOptions_t *name = new ListOptions_t[size+2]
 #define AddListOptions(name, pos, indexval, descval) name[pos].index = indexval; strncpy(name[pos].desc, descval, 256)
 #define FinishListOptions(name,pos) name[pos].index = -1; strncpy(name[pos].desc, "", 256)
 

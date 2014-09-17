@@ -153,12 +153,14 @@ namespace iHanClient {
 
 	void VarTypeHelper::Destroy() {
 		delete instance;
+		instance = NULL;
 	}
 
 
 	VarTypeHelper::VarTypeHelper() : customid(1000){
 		unsigned int i;
 		for (i  = 0; i < ConfigTypeSize(); i++) {
+			//this->mapping[VarTypes[i].id] = VarTypes[i].name;
 			this->mapping.insert(std::pair<uint32_t, std::string>(VarTypes[i].id, VarTypes[i].name));
 		}
 	}
@@ -175,7 +177,7 @@ namespace iHanClient {
 
 
 	VarTypeHelper::~VarTypeHelper() {
-
+		this->mapping.clear();
 	}
 
 	HashVals VarTypeHelper::VarTypeToVarStorage() {
