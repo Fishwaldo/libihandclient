@@ -139,7 +139,7 @@ typedef enum StoredType_t {
 	ST_DATETIME,
 	ST_VARSTORAGE,
 	ST_LIST,
-	ST_INVALID
+	ST_INVALID = 100
 } StoredType_t;
 
 typedef struct StoredVals_r {

@@ -4,6 +4,7 @@
 #include "ZBLocations.hpp"
 #include "ZBHAProfiles.hpp"
 #include "DeviceTypes.hpp"
+#include "varcontainer.hpp"
 
 
 
@@ -153,18 +154,18 @@ MULN_DEVICE_CONFWRITE
 
 /* CFGD_TYPE field types */
 typedef enum t_ConfigType {
-				TC_NULL = -1,
-				TC_INT = 1,
-				TC_LONG,
-				TC_LONGLONG,
-				TC_FLOAT,
-				TC_STRING,
-				TC_LIST,
-				TC_IPADDR,
-				TC_BOOL,
-				TC_HASH,
-				TC_DATETIME,
-				TC_VARSTORAGE
+	TC_STRING = ST_STRING,
+	TC_INT = ST_INT,
+	TC_LONG = ST_LONG,
+	TC_LONGLONG = ST_LONGLONG,
+	TC_FLOAT = ST_FLOAT,
+	TC_HASH = ST_HASH,
+	TC_BOOL = ST_BOOL,
+	TC_DATETIME = ST_DATETIME,
+	TC_VARSTORAGE = ST_VARSTORAGE,
+	TC_LIST = ST_LIST,
+	TC_IPADDR,
+	TC_NULL = ST_INVALID
 } t_ConfigType;
 
 /* CFGD_TYPE field types */
