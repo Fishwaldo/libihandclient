@@ -645,7 +645,7 @@ void VarStorage_t::printToStream(int tab) {
 						std::map<std::string, HashValsVariant_t>::const_iterator hvit;
 						for (hvit = hv.begin(); hvit != hv.end(); hvit++) {
 							DOTAB(cerr);
-							cout << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
+							cerr << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
 						}
 					}
 			} else if ((*it2)->StoredType == ST_BOOL) {
@@ -1015,7 +1015,7 @@ std::ostream& operator<<(std::ostream &stream, const VarStorage_t &vs) {
 						std::map<std::string, HashValsVariant_t>::const_iterator hvit;
 						for (hvit = hv.begin(); hvit != hv.end(); hvit++) {
 							DOTAB(stream);
-							cout << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
+							stream << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
 						}
 						tab = tab -1;
 					}
