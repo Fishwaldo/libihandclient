@@ -18,7 +18,6 @@ namespace {
 			protected:
 			     virtual void TearDown() {
 			    	 iHanClient::VarTypeHelper::Destroy();
-			    	 std::cout << "bye" << std::endl;
 			     }
 
 		};
