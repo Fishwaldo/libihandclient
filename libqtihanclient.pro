@@ -6,8 +6,11 @@
 
 QT       -= core gui
 
-TARGET = ihanclient
+TARGET = qtihanclient
 TEMPLATE = lib
 CONFIG += lib_bundle c++11 staticlib
 
 include (libihanclient.pri)
+
+SOURCES = $$QTIHANCLIENTSOURCES
+HEADERS = $$QTIHANCLIENTHEADERS

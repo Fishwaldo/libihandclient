@@ -1,10 +1,8 @@
-
-
-
 SOURCES += $$PWD/src/LogClass.cpp \
     $$PWD/src/varcontainer.cpp \
     $$PWD/src/ZBLocations.cpp \
     $$PWD/src/VariableTypes.cpp \
+    $$PWD/src/MessageBus.cpp \
     $$PWD/muscle/message/Message.cpp \
     $$PWD/muscle/util/ByteBuffer.cpp \
     $$PWD/muscle/util/Directory.cpp \
@@ -18,6 +16,13 @@ SOURCES += $$PWD/src/LogClass.cpp \
     $$PWD/muscle/iogateway/AbstractMessageIOGateway.cpp \
     $$PWD/muscle/iogateway/MessageIOGateway.cpp
 
+QTIHANCLIENTSOURCES += $$PWD/src/QtiHanClient/DeviceModel.cpp \
+    $$PWD/src/QtiHanClient/QtiHanClient.cpp \
+    $$PWD/src/QtiHanClient/modeltest.cpp \
+    $$PWD/src/QtiHanClient/MessageHandler.cpp \
+    $$PWD/src/QtiHanClient/kdescendantsproxymodel.cpp  
+
+
 HEADERS += $$PWD/include/iHanClient/DeviceTypes.hpp \
     $$PWD/include/iHanClient/LogClass.hpp \
     $$PWD/include/iHanClient/MsgTypes.hpp \
@@ -25,6 +30,7 @@ HEADERS += $$PWD/include/iHanClient/DeviceTypes.hpp \
     $$PWD/include/iHanClient/ZBHAProfiles.hpp \
     $$PWD/include/iHanClient/ZBLocations.hpp \
     $$PWD/include/iHanClient/VariableTypes.hpp \
+    $$PWD/include/iHanClient/MessageBus.hpp \
     $$PWD/muscle/message/Message.h \
     $$PWD/muscle/util/ByteBuffer.h \
     $$PWD/muscle/util/Directory.h \
@@ -69,6 +75,13 @@ HEADERS += $$PWD/include/iHanClient/DeviceTypes.hpp \
     $$PWD/muscle/dataio/FileDataIO.h \
     $$PWD/muscle/reflector/StorageReflectConstants.h
 
+QTIHANCLIENTHEADERS += $$PWD/include/QtiHanClient/DeviceModel.h \
+    $$PWD/include/QtiHanClient/MessageHandler.h \
+    $$PWD/include/QtiHanClient/QtiHanClient.h \ 
+    $$PWD/include/QtiHanClient/kbihash_p.h  \
+    $$PWD/include/QtiHanClient/kdescendantsproxymodel.h  \
+    $$PWD/include/QtiHanClient/kitemmodels_export.h  \
+    $$PWD/include/QtiHanClient/modeltest.h
 
 
 DEFINES += MUSCLE_SINGLE_THREAD_ONLY

@@ -30,6 +30,13 @@
 #ifndef MESSAGEBUS_H_
 #define MESSAGEBUS_H_
 
+
+typedef struct vardef_t {
+		char name[256];
+		StoredType_t type;
+} vardef_t;
+
+
 /*! @brief This Class encapsulates all our Messages that we send between Devices and over the wire
  *
  * This Class is used to ensure we have a common format for all messages sent between devices
@@ -460,6 +467,7 @@ public:
 private:
 		friend std::ostream& operator<<(std::ostream&, MessageBus_t &);
 		bool checkNewDevice(VarStorage msg);
+		bool checkVars(VarStorage msg, vardef_t *checks);
 		VarStorage message;
 		std::string source;
 		std::string destination;

@@ -195,6 +195,13 @@ typedef enum VarType_t {
 #define MSGB_TO "MSBTO"
 #define MSGB_MSG_TYPE "MSGTYPE"
 #define MSGB_MSG_SUBTYPE "MSGSUBTYPE"
+#define MSGB_CLNCAP_AUTHUSER "AuthUser"
+#define MSGB_CLNCAP_AUTHKEY "AuthKey"
+#define MSGB_CLNCAP_HOSTID "HostID"
+#define MSGB_CLNCAP_CAPDEVICE "CapDvc"
+#define MSGB_CLNCAP_FLAGS "Flags"
+#define MSGB_SETUP_CLIENTINFORM "ClientInform"
+
 
 enum MSG_BUS_TYPES {
 	MSB_SET_CONFIG = 1,

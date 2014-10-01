@@ -28,13 +28,22 @@
 #include "iHanClient/LogClass.hpp"
 
 
+vardef_t clncapcheck[] = {
+		{MSGB_CLNCAP_AUTHUSER, ST_STRING},
+		{MSGB_CLNCAP_AUTHKEY, ST_STRING},
+		{MSGB_CLNCAP_CAPDEVICE, ST_LONG},
+		{MSGB_CLNCAP_HOSTID, ST_LONG},
+		{MSGB_CLNCAP_FLAGS, ST_LONGLONG},
+		{"", ST_INVALID}
+};
+
+
 
 MessageBus_t::MessageBus_t() {
 
 }
 
 MessageBus_t::~MessageBus_t() {
-
 }
 
 bool MessageBus_t::createSetVar(VarStorage var, std::string source) {
@@ -117,6 +126,10 @@ bool MessageBus_t::createSetup(VarStorage setup, std::string source) {
 }
 bool MessageBus_t::createClientCap(VarStorage cap, std::string source) {
 	if (cap) {
+		if (!this->checkVars(cap, clncapcheck)) {
+			iHanClient::Logging::LogWarn(std::string("Check createClientCap Failed"));
+			return false;
+		}
 		this->message = cap;
 		this->message->setWhat(MSB_CLIENT_CAP);
 		this->source = source;
@@ -223,8 +236,10 @@ VarStorage MessageBus_t::getSetConfig() {
 }
 VarStorage MessageBus_t::getReportVar() {
 	if (this->message) {
-		if (this->message->getWhat() == MSB_REPORT_VAR)
+		if (this->message->getWhat() == MSB_REPORT_VAR) {
+			/* add the Source */
 			return this->message;
+		}
 		iHanClient::Logging::LogWarn(std::string("Not a Report Var Message:" + this->getTypeAsString()));
 		return VarStorage(new VarStorage_t());
 	}
@@ -343,20 +358,28 @@ VarStorage MessageBus_t::getTransportVarStorage() {
 }
 
 bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
-	if (!msg) {
+	if (msg == NULL) {
 		iHanClient::Logging::LogWarn(std::string("Invalid Message"));
 		return false;
 	}
-	bool ret;
+	bool ret = false;
 	switch ((MSG_BUS_TYPES)msg->getWhat()) {
 		case MSB_SET_VAR:
-		case MSB_SET_CONFIG:
+		case MSB_REPORT_VAR:
 			ret = msg->getVarStorageValue(SRVCAP_ENDPT_VARS, this->message);
+			if (!ret) {
+				iHanClient::Logging::LogWarn(std::string("Failed to get EndPt Vars from Message"));
+				return false;
+			}
 			this->message->setWhat(msg->getWhat());
 			break;
-		case MSB_REPORT_VAR:
+		case MSB_SET_CONFIG:
 		case MSB_REPORT_CONFIG:
 			ret = msg->getVarStorageValue(SRVCAP_ENDPT_CONFIG, this->message);
+			if (!ret) {
+				iHanClient::Logging::LogWarn(std::string("Failed to get EndPt Vars from Message"));
+				return false;
+			}
 			this->message->setWhat(msg->getWhat());
 			break;
 		case MSB_NEW_DEVICE:
@@ -392,10 +415,16 @@ bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
 	}
 	if (!ret)
 		return false;
-	if (!msg->getStringValue(MSGB_FROM, this->source))
+	if (!msg->getStringValue(MSGB_FROM, this->source)) {
+		iHanClient::Logging::LogWarn(std::string("Source is not Set"));
 		return false;
-	if (!msg->getStringValue(MSGB_TO, this->destination))
-		return false;
+	}
+	if (!msg->getStringValue(MSGB_TO, this->destination)) {
+		if (MsgIsSet((MSG_BUS_TYPES)this->message->getWhat())) {
+			iHanClient::Logging::LogWarn(std::string("Destination is Not Set"));
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -436,6 +465,25 @@ bool MessageBus_t::checkNewDevice(VarStorage msg) {
 	if (msg->getSize(SRVCAP_ENDPT_VARS) != 1) {
 		iHanClient::Logging::LogWarn(std::string("MSB_NEW_DEVICE - Missing Vars Field"));
 		return false;
+	}
+	return true;
+}
+
+
+
+
+
+bool MessageBus_t::checkVars(VarStorage msg, vardef_t *checks) {
+	while (checks->type != ST_INVALID) {
+		if (msg->getSize(checks->name) != 1) {
+			iHanClient::Logging::LogWarn(std::string("checkVars - Field Invalid: " + std::string(checks->name)));
+			return false;
+		}
+		if (msg->getType(checks->name) != checks->type) {
+			iHanClient::Logging::LogWarn(std::string("checkVars - Wrong Field Type: " + checks->type));
+			return false;
+		}
+		checks++;
 	}
 	return true;
 }
