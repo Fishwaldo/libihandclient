@@ -95,6 +95,11 @@ if test "${ac_configure_args+set}" != "set" ; then
 fi
 AC_SUBST([CONFIGURE_ARGS], $ac_configure_args)
 
+DX_INIT_DOXYGEN([iHanClient], [docs/Doxyfile], [docs/api])
+DX_DOXYGEN_FEATURE([ON])
+DX_DOT_FEATURE([ON])
+DX_HTML_FEATURE([ON])
+
 AC_CONFIG_FILES([Makefile muscle/Makefile include/Makefile src/Makefile libihanclient.pc test/Makefile])
 AC_CONFIG_FILES([libihanclient.spec libihanclient.dsc debian/libihanclient-dev.dirs debian/libihanclient-dev.install])
 AC_CACHE_SAVE
