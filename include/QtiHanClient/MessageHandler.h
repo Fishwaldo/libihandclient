@@ -65,15 +65,14 @@ Q_SIGNALS:
 	void disconnected();
 	void error(QString, QAbstractSocket::SocketError);
 	void StateChange(State_e);
-	void newEndPt(VarStorage item);
-	void delEndPt(VarStorage item);
-	void updateValues(VarStorage vals);
-	void updateConfig(VarStorage vals);
-	void gotTermTypeMapping(VarStorage vals);
-	void gotMyInfo(VarStorage vals);
+	void newEndPt(MessageBus item);
+	void delEndPt(MessageBus item);
+	void updateValues(MessageBus vals);
+	void updateConfig(MessageBus vals);
+	void gotTermTypeMapping(MessageBus vals);
+	void gotMyInfo(MessageBus vals);
 
 public Q_SLOTS:
-	void sendMessage(MSG_BUS_TYPES, VarStorage Msg);
 	void sendMessage(MessageBus);
 private slots:
     void HandleSockPackets();

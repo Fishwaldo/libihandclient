@@ -150,16 +150,20 @@ TEST_F(MessageBusTest, createSetup) {
 TEST_F(MessageBusTest, createClientCap) {
 	MessageBusFactory(MB);
 	VarContainerFactory(test);
-	test->addStringValue("test", "test");
+	test->addStringValue(MSGB_CLNCAP_AUTHUSER, "test");
+	test->addStringValue(MSGB_CLNCAP_AUTHKEY, "pw");
+	test->addLongValue(MSGB_CLNCAP_CAPDEVICE, 1);
+	test->addLongValue(MSGB_CLNCAP_HOSTID, 21);
+	test->addLongLongValue(MSGB_CLNCAP_FLAGS, 0);
 	EXPECT_TRUE(MB->createClientCap(test, "testclient"));
 	EXPECT_EQ(MB->getType(), MSB_CLIENT_CAP);
 	VarStorage result = MB->getClientCap();
 	EXPECT_TRUE(result != NULL);
 	std::string mystr;
-	EXPECT_TRUE(result->getStringValue("test", mystr));
+	EXPECT_TRUE(result->getStringValue(MSGB_CLNCAP_AUTHUSER, mystr));
 	EXPECT_STREQ(mystr.c_str(), "test");
 	VarStorage trans = MB->getTransportVarStorage();
-	EXPECT_EQ(trans->getType("test"), ST_STRING);
+	EXPECT_EQ(trans->getType(MSGB_CLNCAP_AUTHUSER), ST_STRING);
 	EXPECT_EQ(trans->getWhat(), MSB_CLIENT_CAP);
 }
 

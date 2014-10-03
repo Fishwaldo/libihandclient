@@ -67,22 +67,22 @@ QtiHanClient::QtiHanClient(QObject *parent) {
 				this, SLOT(HandleDisconnected()));
 	QObject::connect(this->mh, SIGNAL(error(QString, QAbstractSocket::SocketError)),
 				this, SLOT(HandleError(QString, QAbstractSocket::SocketError)));
-	QObject::connect(this->mh, SIGNAL(newEndPt(VarStorage)),
-				this, SLOT(HandleNewDevice(VarStorage)));
-	QObject::connect(this->mh, SIGNAL(delEndPt(VarStorage)),
-				this, SLOT(HandleDelDevice(VarStorage)));
-	QObject::connect(this->mh, SIGNAL(updateValues(VarStorage)),
-				this, SLOT(HandleDeviceUpdate(VarStorage)));
-	QObject::connect(this->mh, SIGNAL(updateConfig(VarStorage)),
-				this, SLOT(HandleDeviceConfigUpdate(VarStorage)));
+	QObject::connect(this->mh, SIGNAL(newEndPt(MessageBus)),
+				this, SLOT(HandleNewDevice(MessageBus)));
+	QObject::connect(this->mh, SIGNAL(delEndPt(MessageBus)),
+				this, SLOT(HandleDelDevice(MessageBus)));
+	QObject::connect(this->mh, SIGNAL(updateValues(MessageBus)),
+				this, SLOT(HandleDeviceUpdate(MessageBus)));
+	QObject::connect(this->mh, SIGNAL(updateConfig(MessageBus)),
+				this, SLOT(HandleDeviceConfigUpdate(MessageBus)));
 	QObject::connect(this->mh, SIGNAL(StateChange(State_e)),
 				this, SLOT(HandleStateChange(State_e)));
-	QObject::connect(this->mh, SIGNAL(gotTermTypeMapping(VarStorage)),
-				this, SLOT(HandleTermTypeMappings(VarStorage)));
+	QObject::connect(this->mh, SIGNAL(gotTermTypeMapping(MessageBus)),
+				this, SLOT(HandleTermTypeMappings(MessageBus)));
 	QObject::connect(this->tdm, SIGNAL(sendMsg(MessageBus)),
 				this->mh, SLOT(sendMessage(MessageBus)));
-	QObject::connect(this->mh, SIGNAL(gotClientInform(VarStorage)),
-				this, SLOT(HandleClientInform(VarStorage)));
+	QObject::connect(this->mh, SIGNAL(gotMyInfo(MessageBus)),
+				this, SLOT(HandleClientInform(MessageBus)));
 	this->type = 0;
 	this->mh->setFlags(CLNTCAP_FLAG_VARTYPE | CLNTCAP_FLAG_TERMS);
 
@@ -152,7 +152,8 @@ void QtiHanClient::HandleError(QString errstr, QAbstractSocket::SocketError errt
 void QtiHanClient::HandleStateChange(State_e state) {
 	emit StateChange(state);
 }
-void QtiHanClient::HandleNewDevice(VarStorage item) {
+void QtiHanClient::HandleNewDevice(MessageBus msg) {
+	VarStorage item = msg->getNewDevice();
 	std::string deviceID;
 	if (!item->getStringValue(SRVCAP_ENDPT_SERIAL, deviceID)) {
 		qWarning() << "Can't get End Point Serial in newEndPt";
@@ -168,13 +169,16 @@ void QtiHanClient::HandleNewDevice(VarStorage item) {
 	this->tdm->addDevice(item);
 	emit newEndPt(item);
 }
-void QtiHanClient::HandleDelDevice(VarStorage item) {
-	std::string deviceID;
+void QtiHanClient::HandleDelDevice(MessageBus msg) {
+
+	std::string deviceID = msg->getDelDevice();
+#if 0
 	if (!item->getStringValue(SRVCAP_ENDPT_SERIAL, deviceID)) {
 		qWarning() << "Can't get End Point Serial in delEndPt";
 		return;
 	}
-	this->tdm->delDevice(item);
+#endif
+	this->tdm->delDevice(deviceID);
 	/* Regardless of whats going on, del this End Point in the Global DeviceMap */
 	if (GlobalDevices.contains(deviceID)) {
 		GlobalDevices.remove(deviceID);
@@ -182,28 +186,32 @@ void QtiHanClient::HandleDelDevice(VarStorage item) {
 	} else {
 		qWarning() << "Device Does Not Exists in Global DeviceMap";
 	}
-	emit delEndPt(item);
+	emit delEndPt(deviceID);
 }
-void QtiHanClient::HandleDeviceUpdate(VarStorage item) {
+void QtiHanClient::HandleDeviceUpdate(MessageBus msg) {
+	VarStorage newvals = msg->getReportVar();
 	std::string deviceID;
 	QVector<QString> updatedfields;
 	VarStorage vals;
-
+	deviceID = msg->getSource();
+#if 0
 	if (!item->getStringValue(SRVCAP_ENDPT_SERIAL, deviceID)) {
 		qWarning() << "Can't get End Point Serial in HandleDeviceUpdate";
 		return;
 	}
-	if (!GlobalDevices.contains(deviceID)) {
-		qWarning() << "Can't find Device in DeviceMap for HandleDeviceUpdate";
-		return;
-	}
-	qDebug() << "Got Updated Values from Device";
 	VarStorage newvals;
 	if (item->getVarStorageValue(SRVCAP_ENDPT_VARS, newvals) == false) {
 		qWarning("Can't get End Point Vars from Packet");
 		std::cout << *item << std::endl;
 		return;
 	}
+
+#endif
+	if (!GlobalDevices.contains(deviceID)) {
+		qWarning() << "Can't find Device in DeviceMap for HandleDeviceUpdate";
+		return;
+	}
+	qDebug() << "Got Updated Values from Device";
 	if (GlobalDevices[deviceID]->getVarStorageValue(SRVCAP_ENDPT_VARS, vals) == false) {
 		qWarning("Can't get End Point Vars from GloablDevices");
 		return;
@@ -405,37 +413,37 @@ void QtiHanClient::HandleDeviceUpdate(VarStorage item) {
 	for (int i = 0; i < updatedfields.size(); i++) {
 		std::cout << qPrintable(updatedfields.at(i)) << std::endl;
 	}
-#if 0
-	qDebug() << "Existing Fields:";
-	for (auto &oldfield: oldfields) {
-		//qDebug() << "\t" << oldfield;
-	}
-#endif
+
 	//newvals->addStringValue(SRVCAP_ENDPT_SERIAL, deviceID);
 	//GlobalDevices[deviceID]->replaceVarStorageValue(SRVCAP_ENDPT_VARS, newvals);
-	this->tdm->updateDevice(item);
+	this->tdm->updateDevice(newvals);
 	emit updateValues(deviceID.c_str(), updatedfields);
 }
 
-void QtiHanClient::HandleDeviceConfigUpdate(VarStorage item) {
-	std::string deviceID;
+void QtiHanClient::HandleDeviceConfigUpdate(MessageBus msg) {
+	VarStorage newvals = msg->getReportConfig();
+	std::string deviceID = msg->getSource();
 	QVector<QString> updatedfields;
 	VarStorage vals;
 
-	if (!item->getStringValue(SRVCAP_ENDPT_SERIAL, deviceID)) {
-		qWarning() << "Can't get End Point Serial in HandleDeviceConfigUpdate";
-		return;
-	}
 	if (!GlobalDevices.contains(deviceID)) {
 		qWarning() << "Can't find Device in DeviceMap for HandleDeviceConfigUpdate";
 		return;
 	}
 	qDebug() << "Got Updated Config from Device";
+
+#if 0
+	if (!item->getStringValue(SRVCAP_ENDPT_SERIAL, deviceID)) {
+		qWarning() << "Can't get End Point Serial in HandleDeviceConfigUpdate";
+		return;
+	}
 	VarStorage newvals;
+
 	if (item->getVarStorageValue(SRVCAP_ENDPT_CONFIG, newvals) == false) {
 		qWarning("Can't get End Point Config from Packet");
 		return;
 	}
+#endif
 	if (GlobalDevices[deviceID]->getVarStorageValue(SRVCAP_ENDPT_CONFIG, vals) == false) {
 		qWarning("Can't get End Point Config from GloablDevices");
 		return;
@@ -641,17 +649,21 @@ void QtiHanClient::HandleDeviceConfigUpdate(VarStorage item) {
 	//newvals->addStringValue(SRVCAP_ENDPT_SERIAL, deviceID);
 	//GlobalDevices[deviceID]->replaceVarStorageValue(SRVCAP_ENDPT_VARS, newvals);
 	//this->tdm->updateDevice(item);
-	this->tdm->updateDeviceConfig(item);
+	this->tdm->updateDeviceConfig(newvals);
 	emit updateConfig(deviceID.c_str(), updatedfields);
 }
 
-void QtiHanClient::sendMessage(MSG_BUS_TYPES what, VarStorage Msg) {
-	qDebug() << "Sending";
-	this->mh->sendMessage(what, Msg);
+void QtiHanClient::sendMessage(MessageBus msg) {
+	this->mh->sendMessage(msg);
 }
 
-void QtiHanClient::HandleTermTypeMappings(VarStorage vals) {
-	std::cout << vals << std::endl;
+void QtiHanClient::HandleTermTypeMappings(MessageBus msg) {
+	VarStorage val1 = msg->getSetup();
+	VarStorage vals;
+	if (!val1->getVarStorageValue("TermTypes", vals)) {
+		qWarning() << "Can't get TermTypes from Setup Message";
+		return;
+	}
 	/* Convert to QMap */
 	/*       VarType         TermName        VarID    VarValue */
 	/* QMap< QString, QMap < QString, QMap < QString, QVariant > > > Term_Map_t; */
@@ -679,7 +691,7 @@ void QtiHanClient::HandleTermTypeMappings(VarStorage vals) {
 			std::map<std::string, HashValsVariant_t>::const_iterator hvit;
 			for (hvit = VarValues.begin(); hvit != VarValues.end(); hvit++) {
 				QTermVars.insert((*hvit).first.c_str(), QVariant(boost::get<std::string>((*hvit).second).c_str()));
-				//cout << "\t\t" << (*hvit).first << "=" << (*hvit).second << std::endl;
+				cout << "\t\t" << (*hvit).first.c_str() << std::endl;
 			}
 			QTermVals.insert((*TermIter).c_str(), QTermVars);
 		}
@@ -688,9 +700,14 @@ void QtiHanClient::HandleTermTypeMappings(VarStorage vals) {
 	}
 }
 
-void QtiHanClient::HandleClientInform(VarStorage vals) {
-	this->myinfo = vals;
-
+void QtiHanClient::HandleClientInform(MessageBus msg) {
+	VarStorage clninfo;
+	msg->getSetup()->getVarStorageValue(MSGB_SETUP_CLIENTINFORM, clninfo);
+	if (clninfo->getSize() == 0) {
+		qWarning() << "ClientInfo Structure is empty";
+		exit(-1);
+	}
+	this->myinfo = clninfo;
 }
 QString QtiHanClient::getMyDeviceID() {
 	if (this->myinfo->getSize(SRVCAP_ENDPT_SERIAL) == 0) {

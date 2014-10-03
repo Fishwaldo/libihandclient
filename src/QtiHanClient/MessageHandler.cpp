@@ -144,7 +144,7 @@ void MessageHandler::processNewEndPt(MessageBus msg) {
 		return;
 	}
 	VarStorage newdev = msg->getNewDevice();
-	if (!newdev) {
+	if (newdev->getSize() == 0) {
 		qWarning() << "Empty newDev Client from MessageBus";
 		return;
 	}
@@ -152,10 +152,8 @@ void MessageHandler::processNewEndPt(MessageBus msg) {
 	newdev->getStringValue(SRVCAP_ENDPT_SERIAL, DeviceSerial);
 	std::string DeviceName;
 	newdev->getStringValue(SRVCAP_ENDPT_NAME, DeviceName);
-	if (DeviceName.length() == 0)
-		newdev->printToStream();
 	qDebug() << "Adding New Endpoint: " << DeviceName.c_str() << " (" << DeviceSerial.c_str() << ")";
-	emit newEndPt(newdev);
+	emit newEndPt(msg);
 }
 
 void MessageHandler::processDelEndPt(MessageBus msg) {
@@ -164,7 +162,7 @@ void MessageHandler::processDelEndPt(MessageBus msg) {
 		return;
 	}
 	VarStorage newdev = msg->getNewDevice();
-	if (!newdev) {
+	if (newdev->getSize() == 0) {
 		qWarning() << "Empty newDev Client from MessageBus";
 		return;
 	}
@@ -172,10 +170,8 @@ void MessageHandler::processDelEndPt(MessageBus msg) {
 	newdev->getStringValue(SRVCAP_ENDPT_SERIAL, DeviceSerial);
 	std::string DeviceName;
 	newdev->getStringValue(SRVCAP_ENDPT_NAME, DeviceName);
-	if (DeviceName.length() == 0)
-		newdev->printToStream();
 	qDebug() << "Deleting Endpoint: " << DeviceName.c_str() << " (" << DeviceSerial.c_str() << ")";
-	emit delEndPt(newdev);
+	emit delEndPt(msg);
 }
 
 
@@ -185,14 +181,6 @@ void MessageHandler::processServerCaps(MessageBus msg) {
 }
 
 
-
-void MessageHandler::sendMessage(MSG_BUS_TYPES what, VarStorage Msg) {
-	muscle::MessageRef MMsg = Msg->toMuscle();
-	MMsg()->what = what;
-	//MMsg()->PrintToStream();
-	this->gw.AddOutgoingMessage(MMsg);
-	this->gw.DoOutput();
-}
 
 void MessageHandler::sendMessage(MessageBus msg) {
 	VarStorage rawmsg = msg->getTransportVarStorage();
@@ -220,7 +208,7 @@ void MessageHandler::processSensorUpdate(MessageBus msg) {
 		return;
 	}
 	std::cout << msg << std::endl;
-	emit updateValues(var);
+	emit updateValues(msg);
 }
 void MessageHandler::processConfigUpdate(MessageBus msg) {
 	if (msg->getType() != MSB_REPORT_CONFIG) {
@@ -228,12 +216,12 @@ void MessageHandler::processConfigUpdate(MessageBus msg) {
 		return;
 	}
 	VarStorage config = msg->getReportConfig();
-	if (!config->getSize() == 0) {
+	if (config->getSize() == 0) {
 		qWarning() << "Empty config message from MessageBus";
 		std::cout << msg << std::endl;
 		return;
 	}
-	emit updateConfig(config);
+	emit updateConfig(msg);
 }
 
 void MessageHandler::setType(int Type) {
@@ -280,25 +268,27 @@ void MessageHandler::processSetup(MessageBus msg) {
 	}
 	VarStorage setup = msg->getSetup();
 	if (setup->getSize() == 0) {
-		qWarning() << "Empty config message from MessageBus";
+		qWarning() << "Empty Setup message from MessageBus";
 		return;
 	}
 	if (setup->getSize(MSGB_SETUP_CLIENTINFORM) > 0) {
 		qDebug() << "Got Client Inform Message";
-		VarStorage clientInform;
-		setup->getVarStorageValue(MSGB_SETUP_CLIENTINFORM, clientInform);
-		emit gotMyInfo(clientInform);
+		emit gotMyInfo(msg);
 	}
 
-	HashVals VarTypes;
-	if ((this->flags & CLNTCAP_FLAG_VARTYPE) & setup->getHashValue("VarTypes", VarTypes)) {
+	if ((this->flags & CLNTCAP_FLAG_VARTYPE) & setup->getSize("VarTypes")) {
 		qDebug() << "Got VarTypes Setup Message";
+		HashVals VarTypes;
+		setup->getHashValue("VarTypes", VarTypes);
+		if (VarTypes.size() == 0) {
+			qWarning() << "VarTypes Setup Message is Empty";
+			return;
+		}
 		iHanClient::VarTypeHelper::Create(VarTypes);
 	}
-	VarContainerFactory(TermTypes);
-	if ((this->flags & CLNTCAP_FLAG_TERMS) & setup->getVarStorageValue("TermTypes", TermTypes)) {
+	if ((this->flags & CLNTCAP_FLAG_TERMS) & setup->getSize("TermTypes")) {
 		qDebug() << "Got TermTypeMappings Setup Message";
-		emit gotTermTypeMapping(TermTypes);
+		emit gotTermTypeMapping(msg);
 	}
 
 }

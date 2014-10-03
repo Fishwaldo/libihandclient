@@ -204,31 +204,26 @@ void DeviceModel_t::addDevice(const VarStorage &Device) {
 		qWarning() << "Can't Find Device Serial Number in DeviceModel";
 	}
 }
-void DeviceModel_t::delDevice(const VarStorage &Device) {
-	std::string deviceid;
-	std::string deviceName;
-	Device->getStringValue("EndPtName", deviceName);
-	if (Device->getStringValue(SRVCAP_ENDPT_SERIAL, deviceid) == true) {
-		QModelIndexList Items = this->match(this->index(0, 0, QModelIndex()), (int) SerialRole, QString::fromStdString(deviceid), 2, Qt::MatchRecursive);
-		if (Items.count() <= 0) {
-			qWarning() << "Can't find Device in match list for Model";
+void DeviceModel_t::delDevice(const std::string deviceid) {
+	QModelIndexList Items = this->match(this->index(0, 0, QModelIndex()), (int) SerialRole, QString::fromStdString(deviceid), 2, Qt::MatchRecursive);
+	if (Items.count() <= 0) {
+		qWarning() << "Can't find Device in match list for Model";
+		return;
+	}
+	if (m_devices.contains(deviceid)) {
+		DeviceItem *delitem = m_devices.value(deviceid);
+		if (delitem->childCount() > 0) {
+			qWarning() << "Can't Remove Device as it still has Children";
 			return;
 		}
-		if (m_devices.contains(deviceid)) {
-			DeviceItem *delitem = m_devices.value(deviceid);
-			if (delitem->childCount() > 0) {
-				qWarning() << "Can't Remove Device as it still has Children";
-				return;
-			}
-			beginRemoveRows(Items[0].parent(), Items[0].row(), Items[0].row());
-			/* XXX Confirm the sharedpointer does actually delete here */
-			delitem->remove();
-			m_devices.remove(deviceid);
-			qDebug() << QString("Deleting Device ").append(deviceName.c_str()) << " to DeviceModel";
-			endRemoveRows();
-		} else {
-			qWarning() << "Can't Find Device Serial Number in DeviceModel";
-		}
+		beginRemoveRows(Items[0].parent(), Items[0].row(), Items[0].row());
+		/* XXX Confirm the sharedpointer does actually delete here */
+		delitem->remove();
+		m_devices.remove(deviceid);
+		qDebug() << QString("Deleting Device ").append(deviceid.c_str()) << " to DeviceModel";
+		endRemoveRows();
+	} else {
+		qWarning() << "Can't Find Device Serial Number in DeviceModel";
 	}
 }
 
@@ -470,12 +465,9 @@ bool DeviceModel_t::setData (const QModelIndex & index, const QVariant &value, i
 			break;
 			case DeviceConfig: {
 				qDebug() << "setData on DeviceConfig - Processing";
-				VarContainerFactory(sendvar);
 				VarStorage var = value.value<VarStorage>();
-				sendvar->addVarStorageValue(SRVCAP_ENDPT_CONFIG, var);
-				sendvar->addStringValue(SRVCAP_ENDPT_SERIAL, DeviceSerialNo);
 				MessageBusFactory(Config);
-				if (Config->createSetConfig(sendvar, QtiHanClient::Get()->getMyDeviceID().toStdString())) {
+				if (Config->createSetConfig(var, QtiHanClient::Get()->getMyDeviceID().toStdString())) {
 					Config->setDestination(DeviceSerialNo);
 					emit sendMsg(Config);
 				} else {
@@ -498,12 +490,9 @@ bool DeviceModel_t::setData (const QModelIndex & index, const QVariant &value, i
 			break;
 			case DeviceVariable: {
 				qDebug() << "setData on DeviceVariable - Processing";
-				VarContainerFactory(sendvar);
 				VarStorage var = value.value<VarStorage>();
-				sendvar->addVarStorageValue(SRVCAP_ENDPT_VARS, var);
-				sendvar->addStringValue(SRVCAP_ENDPT_SERIAL, DeviceSerialNo);
 				MessageBusFactory(Var);
-				if (Var->createSetVar(sendvar, QtiHanClient::Get()->getMyDeviceID().toStdString())) {
+				if (Var->createSetVar(var, QtiHanClient::Get()->getMyDeviceID().toStdString())) {
 					Var->setDestination(DeviceSerialNo);
 					emit sendMsg(Var);
 				} else {

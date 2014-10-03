@@ -81,23 +81,23 @@ Q_SIGNALS:
 	void disconnected();
 	void error(QString, QAbstractSocket::SocketError);
 	void newEndPt(VarStorage item);
-	void delEndPt(VarStorage item);
+	void delEndPt(std::string item);
 	void updateValues(QString, QVector<QString>);
 	void updateConfig(QString, QVector<QString>);
 	void StateChange(State_e);
 public Q_SLOTS:
-	void sendMessage(MSG_BUS_TYPES, VarStorage);
+	void sendMessage(MessageBus);
 private Q_SLOTS:
 	void HandleConnected();
 	void HandleDisconnected();
 	void HandleError(QString, QAbstractSocket::SocketError);
-	void HandleNewDevice(VarStorage item);
-	void HandleDelDevice(VarStorage item);
-	void HandleDeviceUpdate(VarStorage item);
-	void HandleDeviceConfigUpdate(VarStorage item);
+	void HandleNewDevice(MessageBus item);
+	void HandleDelDevice(MessageBus item);
+	void HandleDeviceUpdate(MessageBus item);
+	void HandleDeviceConfigUpdate(MessageBus item);
 	void HandleStateChange(State_e state);
-	void HandleTermTypeMappings(VarStorage vals);
-	void HandleClientInform(VarStorage vals);
+	void HandleTermTypeMappings(MessageBus vals);
+	void HandleClientInform(MessageBus vals);
 
 
 private:

@@ -69,7 +69,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     int columnCount(const QModelIndex & /*parent*/) const;
     void addDevice(const VarStorage &device);
-    void delDevice(const VarStorage &Device);
+    void delDevice(const std::string Device);
     QModelIndex index(int, int, const QModelIndex&) const;
     QModelIndex parent(const QModelIndex&) const;
     QModelIndex FindDevice(QString serial);
