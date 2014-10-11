@@ -10,7 +10,7 @@ namespace muscle {
 /** An interface that can be inherited by any class that wants to provide a Clone()
   * method that will return a copy of itself.
   */
-class Cloneable
+class MUSCLE_EXPORT Cloneable
 {
 public:
    /** Default constructor.  */

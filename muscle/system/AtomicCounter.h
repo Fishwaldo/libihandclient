@@ -39,7 +39,7 @@ namespace muscle {
   * it degenerates to a regular old counter variable, which is very lightweight and portable,
   * but of course will only work properly in single-threaded environments.
   */
-class AtomicCounter
+class MUSCLE_EXPORT AtomicCounter
 {
 public:
    /** Default constructor.  The count value is initialized to zero. */

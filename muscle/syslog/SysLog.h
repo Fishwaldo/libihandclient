@@ -233,7 +233,7 @@ status_t Log(int logLevel, const char * fmt, ...);
   * @param file Name of the source file where the memory failure occurred.
   * @param line Line number where the memory failure occurred.
   */
-void WarnOutOfMemory(const char * file, int line);
+MUSCLE_EXPORT void WarnOutOfMemory(const char * file, int line);
 
 #ifdef MUSCLE_INCLUDE_SOURCE_LOCATION_IN_LOGTIME
 # if defined(_MSC_VER)
@@ -243,7 +243,7 @@ void WarnOutOfMemory(const char * file, int line);
 # else
 #  define LogTime(logLevel, args...) _LogTime(__FILE__, "",           __LINE__, logLevel, args)
 # endif
-status_t _LogTime(const char * sourceFile, const char * optSourceFunction, int line, int logLevel, const char * fmt, ...);
+MUSCLE_EXPORT status_t _LogTime(const char * sourceFile, const char * optSourceFunction, int line, int logLevel, const char * fmt, ...);
 #else
 
 /** Formatted.  Automagically prepends a timestamp and status string to your string.
@@ -252,7 +252,7 @@ status_t _LogTime(const char * sourceFile, const char * optSourceFunction, int l
  *  @param fmt A printf-style format string (e.g. "hello %s\n").  Note that \n is NOT added for you.
  *  @returns B_NO_ERROR on success, or B_ERROR if the log lock couldn't be locked for some reason.
  */
-status_t LogTime(int logLevel, const char * fmt, ...);
+MUSCLE_EXPORT status_t LogTime(int logLevel, const char * fmt, ...);
 
 #endif
 
@@ -289,7 +289,7 @@ status_t UnlockLog();
   * @note This function is currently only implemented under Linux and MacOS/X Leopard; for other OS's, this function is a no-op.
   * @returns B_NO_ERROR on success, or B_ERROR on failure.
   */
-status_t PrintStackTrace(FILE * optFile = NULL, uint32 maxDepth = 64);
+MUSCLE_EXPORT status_t PrintStackTrace(FILE * optFile = NULL, uint32 maxDepth = 64);
 
 /** Logs out a stack trace, if possible.  Returns B_ERROR if not.
  *  @note Currently only works under Linux and MacOS/X Leopard, and then only if -rdynamic is specified as a compile flag.
@@ -298,7 +298,7 @@ status_t PrintStackTrace(FILE * optFile = NULL, uint32 maxDepth = 64);
  *                  64.  The absolute maximum is 256; if you specify a value higher than that, you will still get 256.
  *  @returns B_NO_ERROR on success, or B_ERROR if a stack trace couldn't be logged because the platform doesn't support it.
  */
-status_t LogStackTrace(int logLevel = MUSCLE_LOG_INFO, uint32 maxDepth = 64);
+MUSCLE_EXPORT status_t LogStackTrace(int logLevel = MUSCLE_LOG_INFO, uint32 maxDepth = 64);
 
 /** Similar to LogStackTrace(), except that the current stack trace is returned as a String
   * instead of being printed out anywhere.

@@ -35,39 +35,39 @@ DECLARE_REFTYPES(Message);
 inline const Message & GetEmptyMessage() {return GetDefaultObjectForType<Message>();}
 
 /** Same as GetEmptyMessage(), except it returns a ConstMessageRef instead of a Message. */
-const ConstMessageRef & GetEmptyMessageRef();
+MUSCLE_EXPORT const ConstMessageRef & GetEmptyMessageRef();
 
 /** This function returns a pointer to a singleton ObjectPool that can be 
  *  used to minimize the number of Message allocations and deletions by
  *  recycling the Message objects.  
  */
-MessageRef::ItemPool * GetMessagePool();
+MUSCLE_EXPORT MessageRef::ItemPool * GetMessagePool();
 
 /** Convenience method:  Gets a Message from the Message pool and returns a reference to it.
  *  @param what The 'what' code to set in the returned Message.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory).
  */
-MessageRef GetMessageFromPool(uint32 what = 0L);
+MUSCLE_EXPORT MessageRef GetMessageFromPool(uint32 what = 0L);
 
 /** As above, except that the Message is obtained from the specified pool instead of from the default Message pool.
  *  @param pool the ObjectPool to allocate the Message from.
  *  @param what The 'what' code to set in the returned Message.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory).
  */
-MessageRef GetMessageFromPool(ObjectPool<Message> & pool, uint32 what = 0L);
+MUSCLE_EXPORT MessageRef GetMessageFromPool(ObjectPool<Message> & pool, uint32 what = 0L);
 
 /** Convenience method:  Gets a Message from the message pool, makes it equal to (copyMe), and returns a reference to it.
  *  @param copyMe A Message to clone.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory).
  */
-MessageRef GetMessageFromPool(const Message & copyMe);
+MUSCLE_EXPORT MessageRef GetMessageFromPool(const Message & copyMe);
 
 /** As above, except that the Message is obtained from the specified pool instead of from the default Message pool.
  *  @param pool the ObjectPool to allocate the Message from.
  *  @param copyMe A Message to clone.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory).
  */
-MessageRef GetMessageFromPool(ObjectPool<Message> & pool, const Message & copyMe);
+MUSCLE_EXPORT MessageRef GetMessageFromPool(ObjectPool<Message> & pool, const Message & copyMe);
 
 /** Convenience method:  Gets a Message from the message pool, populates it using the flattened Message
  *  bytes at (flatBytes), and returns it.
@@ -75,7 +75,7 @@ MessageRef GetMessageFromPool(ObjectPool<Message> & pool, const Message & copyMe
  *  @param numBytes The number of bytes that (flatBytes) points to.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory or unflattening error)
  */
-MessageRef GetMessageFromPool(const uint8 * flatBytes, uint32 numBytes);
+MUSCLE_EXPORT MessageRef GetMessageFromPool(const uint8 * flatBytes, uint32 numBytes);
 
 /** As above, except that the Message is obtained from the specified pool instead of from the default Message pool.
  *  @param pool the ObjectPool to allocate the Message from.
@@ -83,27 +83,27 @@ MessageRef GetMessageFromPool(const uint8 * flatBytes, uint32 numBytes);
  *  @param numBytes The number of bytes that (flatBytes) points to.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory or unflattening error)
  */
-MessageRef GetMessageFromPool(ObjectPool<Message> & pool, const uint8 * flatBytes, uint32 numBytes);
+MUSCLE_EXPORT MessageRef GetMessageFromPool(ObjectPool<Message> & pool, const uint8 * flatBytes, uint32 numBytes);
 
 /** Convenience method:  Gets a Message from the message pool, makes it a lightweight copy of (copyMe),
  *  and returns a reference to it.  See Message::MakeLightweightCopyOf() for details.
  *  @param copyMe A Message to make a lightweight copy of.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory).
  */
-MessageRef GetLightweightCopyOfMessageFromPool(const Message & copyMe);
+MUSCLE_EXPORT MessageRef GetLightweightCopyOfMessageFromPool(const Message & copyMe);
 
 /** As above, except that the Message is obtained from the specified pool instead of from the default Message pool.
  *  @param pool the ObjectPool to allocate the Message from.
  *  @param copyMe A Message to make a lightweight copy of.
  *  @return Reference to a Message object, or a NULL ref on failure (out of memory).
  */
-MessageRef GetLightweightCopyOfMessageFromPool(ObjectPool<Message> & pool, const Message & copyMe);
+MUSCLE_EXPORT MessageRef GetLightweightCopyOfMessageFromPool(ObjectPool<Message> & pool, const Message & copyMe);
 
 // this declaration is for internal use only
 class AbstractDataArray;
 
 /** This is an iterator that allows you to efficiently iterate over the field names in a Message. */
-class MessageFieldNameIterator
+class MUSCLE_EXPORT MessageFieldNameIterator
 {
 public:
    /** Default constructor.   
@@ -227,7 +227,7 @@ private:
  *  Note that for quick debugging purposes, it is possible to dump a Message's contents to stdout
  *  at any time by calling PrintToStream() on the Message.
  */
-class Message : public FlatCountable, public Cloneable, private CountedObject<Message>
+class MUSCLE_EXPORT Message : public FlatCountable, public Cloneable, private CountedObject<Message>
 {
 public:
    /** 32 bit what code, for quick identification of message types.  Set this however you like. */
@@ -1536,7 +1536,9 @@ private:
 
    // Iterator support methods
    friend class MessageFieldNameIterator;
+   MUSCLE_EXPORT_WARNINGS_OFF
    Hashtable<String, RefCountableRef> _entries;   
+   MUSCLE_EXPORT_WARNINGS_ON
 };
 
 // Template specializations so that the *Flat() methods do the right thing when called with a String or Message object as the argument

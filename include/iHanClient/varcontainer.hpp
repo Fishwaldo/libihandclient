@@ -46,6 +46,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
+#include "iHanClientDefs.hpp"
 #include "support/MuscleSupport.h"
 #include "message/Message.h"
 
@@ -55,11 +56,12 @@ using namespace std;
 
 typedef std::map<int32_t, std::string> EnumVals_t;
 typedef std::map<int32_t, std::string>::const_iterator list_const_iterator;
-
-class ListVals_t : boost::noncopyable
-//class ListVals_t
+IHANCLIENT_EXPORT_WARNINGS_OFF
+class IHANCLIENT_EXPORT ListVals_t : boost::noncopyable
 {
-	public:
+IHANCLIENT_EXPORT_WARNINGS_ON
+
+public:
 	//~ListVals_t() {//std::cout << "goodbye" << std::endl;}
 	bool setSelected(int32_t);
 	int32_t getSelected() const;
@@ -87,7 +89,9 @@ class ListVals_t : boost::noncopyable
 			ar & boost::serialization::make_nvp("Vals", this->Vals);
 	}
 	int32_t Selected;
+	IHANCLIENT_EXPORT_WARNINGS_OFF
 	EnumVals_t Vals;
+	IHANCLIENT_EXPORT_WARNINGS_ON
 };
 
 typedef struct ListOptions_t {
@@ -169,7 +173,7 @@ typedef std::map<std::string, Vals*> Variables_t;
 
 
 
-class VarStorage_t {
+class IHANCLIENT_EXPORT VarStorage_t {
 	public:
 		VarStorage_t();
 		VarStorage_t(muscle::MessageRef msg);
@@ -236,9 +240,9 @@ class VarStorage_t {
 		bool is_empty();
 		StoredType_t getType(std::string FieldName);
 	private:
-		friend std::ostream& operator<<(std::ostream&, const VarStorage_t &);
+		friend IHANCLIENT_EXPORT std::ostream& operator<<(std::ostream&, const VarStorage_t &);
 		friend class boost::serialization::access;
-		friend void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName);
+		friend IHANCLIENT_EXPORT void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName);
 		template<class Archive> void serialize(Archive & ar, const unsigned int version);
 		std::string getType(StoredVals_t SV) const;
 		std::string getType(StoredType_t type) const ;
@@ -246,23 +250,25 @@ class VarStorage_t {
 		int replaceValueP(std::string FieldName, StoredVals_t val, uint8_t pos);
 
 
-		uint32_t m_what;
 		StoredVals_t getValueP(std::string FieldName, StoredType_t type, uint8_t pos);
+		IHANCLIENT_EXPORT_WARNINGS_OFF
+		uint32_t m_what;
 		Variables_t Variables;
+		IHANCLIENT_EXPORT_WARNINGS_ON
 };
 
 #define VarContainerFactory(x) VarStorage x(new VarStorage_t());
 #define VarContainerCopy(x, y) VarStorage x(new VarStorage_t(*y.get()));
 
-std::ostream& operator<<(std::ostream&, const VarStorage_t &);
-std::ostream& operator<<(std::ostream &os, const VarStorage &ptr);
+IHANCLIENT_EXPORT std::ostream& operator<<(std::ostream&, const VarStorage_t &);
+IHANCLIENT_EXPORT std::ostream& operator<<(std::ostream &os, const VarStorage &ptr);
 template<class Archive> void VarStorage_t::serialize(Archive & ar, const unsigned int version) {
 		(void)version;
 		ar & boost::serialization::make_nvp("VarContainer", this->Variables);
 		ar & boost::serialization::make_nvp("What", this->m_what);
 }
 
-void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName);
+IHANCLIENT_EXPORT void copyVarStorageFields(VarStorage src, VarStorage dst, std::string fieldName);
 
 
 #ifdef Q_OBJECT

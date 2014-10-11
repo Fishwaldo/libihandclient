@@ -24,6 +24,7 @@
  *  @brief
  */
 
+#include "iHanClientDefs.hpp"
 #include "varcontainer.hpp"
 #include "MsgTypes.hpp"
 
@@ -54,7 +55,7 @@ typedef struct vardef_t {
  *
  */
 
-class MessageBus_t {
+class IHANCLIENT_EXPORT MessageBus_t {
 public:
 		/*! @brief Default Constructor of a MessageBus_t
 		 *
@@ -468,9 +469,11 @@ private:
 		friend std::ostream& operator<<(std::ostream&, MessageBus_t &);
 		bool checkNewDevice(VarStorage msg);
 		bool checkVars(VarStorage msg, vardef_t *checks);
+		IHANCLIENT_EXPORT_WARNINGS_OFF
 		VarStorage message;
 		std::string source;
 		std::string destination;
+		IHANCLIENT_EXPORT_WARNINGS_ON
 };
 
 /*! @brief Test if the Message is a Report Type Message
@@ -478,13 +481,13 @@ private:
  * @param[in] type The MessageBus_t Type, retrieved via MessageBus_t::GetType()
  * @return true if its a Report type message, false for all others.
  */
-bool MsgIsReport(MSG_BUS_TYPES type);
+IHANCLIENT_EXPORT bool MsgIsReport(MSG_BUS_TYPES type);
 /*! @brief Test if the message is a Set Type Message
  *
  * @param[in] type the MessageBus_t Type, retrieved via MessageBus_t::GetType()
  * @return true if its a Set Type message, false for all others.
  */
-bool MsgIsSet(MSG_BUS_TYPES type);
+IHANCLIENT_EXPORT bool MsgIsSet(MSG_BUS_TYPES type);
 
 /*! @brief TypeDef defining a shared pointer for MessageBus_t instances
  *
@@ -500,8 +503,8 @@ typedef boost::shared_ptr<MessageBus_t> MessageBus;
 #define MessageBusFactory(x) MessageBus x(new MessageBus_t());
 
 
-std::ostream& operator<<(std::ostream&, const MessageBus_t &);
-std::ostream& operator<<(std::ostream &os, const MessageBus &ptr);
+IHANCLIENT_EXPORT std::ostream& operator<<(std::ostream&, const MessageBus_t &);
+IHANCLIENT_EXPORT std::ostream& operator<<(std::ostream &os, const MessageBus &ptr);
 
 
 #endif /* MESSAGEBUS_H_ */

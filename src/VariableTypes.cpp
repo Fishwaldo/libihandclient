@@ -37,7 +37,7 @@ namespace iHanClient {
 
 #define VARTYPE(x) {VarTypeHelper::x, {#x}}
 
-	VariableTypes_t VarTypes[] {
+	VariableTypes_t VarTypes[] = {
 			VARTYPE(CT_UNKNOWN),
 			VARTYPE(CT_NAME),
 			VARTYPE(CT_TYPE),

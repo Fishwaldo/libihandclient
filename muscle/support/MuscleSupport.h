@@ -756,6 +756,24 @@ typedef int32 ptrdiff;
 #endif
 #endif
 
+#if (defined _WINDOWS || defined WIN32 || defined _MSC_VER) && !defined MINGW
+#	if defined MUSCLE_MAKEDLL	// Create the dynamic library.
+#		define MUSCLE_EXPORT    __declspec(dllexport)
+#	elif defined MUSCLE_USEDLL	// Use the dynamic library
+#		define MUSCLE_EXPORT    __declspec(dllimport)
+#	else							// Create/Use the static library
+#		define MUSCLE_EXPORT
+#	endif
+// Disable export warnings
+#	define MUSCLE_EXPORT_WARNINGS_OFF	__pragma( warning(push) )\
+											__pragma( warning(disable: 4251 4275) )
+#	define MUSCLE_EXPORT_WARNINGS_ON		__pragma( warning(pop) )
+#else
+#	define MUSCLE_EXPORT
+#	define MUSCLE_EXPORT_WARNINGS_OFF
+#	define MUSCLE_EXPORT_WARNINGS_ON
+#endif
+
 #ifdef __cplusplus
 # include "syslog/SysLog.h"  /* for LogTime() */
 #endif  /* __cplusplus */

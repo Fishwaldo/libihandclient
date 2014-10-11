@@ -11,7 +11,7 @@ namespace muscle {
 /** This class is used to designate any object that derives from both Flattenable and RefCountable.
  *  That is, it is an interface for objects that can be both serialized to a byte-stream, AND can be reference-counted.
  */
-class FlatCountable : public RefCountable, public Flattenable
+class MUSCLE_EXPORT FlatCountable : public RefCountable, public Flattenable
 {
 public:
    /** Default ctor */

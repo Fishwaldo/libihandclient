@@ -56,7 +56,7 @@ inline int Strncasecmp(const char * s1, const char * s2, size_t n)
   * UTF8-aware, certain operations (such as Reverse() and ToLowerCase()) will not do the right thing when used in 
   * conjunction with non-ASCII UTF8 data.
   */
-class String : public PseudoFlattenable
+class MUSCLE_EXPORT String : public PseudoFlattenable
 {
 public:
    /** Constructor.

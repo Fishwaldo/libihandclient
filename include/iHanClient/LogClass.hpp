@@ -31,6 +31,7 @@
 
 #include <string>
 #include <boost/format.hpp>
+#include "iHanClientDefs.hpp"
 
 namespace iHanClient {
 	namespace Logging {
@@ -46,7 +47,7 @@ namespace iHanClient {
 										But this level (as others) can be queued and sent to the log only on an error or warning */
 		};
 
-		class i_LogImpl
+		class IHANCLIENT_EXPORT i_LogImpl
 		{
 			public:
 				i_LogImpl(std::string const& _filename, bool const _bConsoleOutput, LogLevel const _saveLevel) { (void)_filename; (void)_bConsoleOutput; (void)_saveLevel;}
@@ -60,7 +61,7 @@ namespace iHanClient {
 
 		/** \brief Implements a platform-independent log...written to the console and, optionally, a file.
 		 */
-		class Log
+		class IHANCLIENT_EXPORT Log
 		{
 			public:
 				/**
@@ -129,7 +130,7 @@ namespace iHanClient {
 				static LogLevel currentlevel;
 		};
 
-		class LogImpl : public i_LogImpl
+		class IHANCLIENT_EXPORT LogImpl : public i_LogImpl
 		{
 		private:
 			friend class Log;

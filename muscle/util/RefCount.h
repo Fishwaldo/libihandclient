@@ -22,7 +22,7 @@ class RefCountable;
 /** This class represents objects that can be reference-counted using the Ref class. 
   * Note that any object that can be reference-counted can also be cached and recycled via an ObjectPool.
   */
-class RefCountable
+class MUSCLE_EXPORT RefCountable
 {
 public:
    /** Default constructor.  Refcount begins at zero. */

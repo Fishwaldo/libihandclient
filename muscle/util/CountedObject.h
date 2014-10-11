@@ -12,7 +12,7 @@ namespace muscle {
 #ifndef MUSCLE_AVOID_OBJECT_COUNTING
 
 /** This base class is used to construct a linked-list of ObjectCounter objects so that we can iterate over them and print them out */
-class ObjectCounterBase
+class MUSCLE_EXPORT ObjectCounterBase
 {
 public:
    /** To be implemented by ObjectCounter subclass to return a human-readable name indicating the type that is being counted */

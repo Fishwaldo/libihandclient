@@ -23,7 +23,7 @@ class ByteBuffer;  // forward reference to avoid chicken-and-egg problems
  *  to save itself into an array of bytes, and recover its state from
  *  an array of bytes.
  */
-class Flattenable 
+class MUSCLE_EXPORT Flattenable 
 {
 public:
    /** Constructor */

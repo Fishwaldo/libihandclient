@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{20E7A76F-9B51-40E1-A493-2636E530A5BF}</ProjectGuid>
+    <RootNamespace>ihanclient</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Platforms\Win32\Microsoft.Cpp.Win32.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Platforms\Win32\Microsoft.Cpp.Win32.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>E:\Dev\boost_1_56_0\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Dev\boost_1_56_0\lib32-msvc-10.0;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>E:\Dev\boost_1_56_0\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Dev\boost_1_56_0\lib32-msvc-10.0;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>MUSCLE_SINGLE_THREAD_ONLY;_CRT_SECURE_NO_WARNINGS;IHANCLIENT_MAKEDLL;MUSCLE_MAKEDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)/../../muscle;$(MSBuildProjectDirectory)/../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;Version.lib;Winmm.lib;IPHLPAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>MUSCLE_SINGLE_THREAD_ONLY;_CRT_SECURE_NO_WARNINGS;IHANCLIENT_MAKEDLL;MUSCLE_MAKEDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)/../../muscle;$(MSBuildProjectDirectory)/../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>ws2_32.lib;Version.lib;Winmm.lib;IPHLPAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\muscle\iogateway\AbstractMessageIOGateway.cpp" />
+    <ClCompile Include="..\..\muscle\iogateway\MessageIOGateway.cpp" />
+    <ClCompile Include="..\..\muscle\message\Message.cpp" />
+    <ClCompile Include="..\..\muscle\syslog\SysLog.cpp" />
+    <ClCompile Include="..\..\muscle\system\SetupSystem.cpp" />
+    <ClCompile Include="..\..\muscle\util\ByteBuffer.cpp" />
+    <ClCompile Include="..\..\muscle\util\Directory.cpp" />
+    <ClCompile Include="..\..\muscle\util\FilePathInfo.cpp" />
+    <ClCompile Include="..\..\muscle\util\MString.cpp" />
+    <ClCompile Include="..\..\muscle\util\NetworkUtilityFunctions.cpp" />
+    <ClCompile Include="..\..\muscle\util\PulseNode.cpp" />
+    <ClCompile Include="..\..\muscle\util\SocketMultiplexer.cpp" />
+    <ClCompile Include="..\..\src\LogClass.cpp" />
+    <ClCompile Include="..\..\src\MessageBus.cpp" />
+    <ClCompile Include="..\..\src\varcontainer.cpp" />
+    <ClCompile Include="..\..\src\VariableTypes.cpp" />
+    <ClCompile Include="..\..\src\ZBLocations.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\iHanClient\DeviceTypes.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\iHanClientDefs.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\LogClass.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\MessageBus.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\MsgTypes.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\varcontainer.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\VariableTypes.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\ZBHAProfiles.hpp" />
+    <ClInclude Include="..\..\include\iHanClient\ZBLocations.hpp" />
+    <ClInclude Include="..\..\muscle\message\Message.h" />
+    <ClInclude Include="..\..\muscle\support\Flattenable.h" />
+    <ClInclude Include="..\..\muscle\support\MuscleSupport.h" />
+    <ClInclude Include="..\..\muscle\syslog\SysLog.h" />
+    <ClInclude Include="..\..\muscle\system\AtomicCounter.h" />
+    <ClInclude Include="..\..\muscle\util\Cloneable.h" />
+    <ClInclude Include="..\..\muscle\util\CountedObject.h" />
+    <ClInclude Include="..\..\muscle\util\FlatCountable.h" />
+    <ClInclude Include="..\..\muscle\util\Hashtable.h" />
+    <ClInclude Include="..\..\muscle\util\MString.h" />
+    <ClInclude Include="..\..\muscle\util\RefCount.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

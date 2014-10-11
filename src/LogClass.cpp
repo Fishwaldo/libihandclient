@@ -23,8 +23,11 @@
 /** @file LogClass.cpp
  *  @brief
  */
-
+#ifdef _WIN32
+#include <Windows.h>
+#else
 #include <sys/time.h>
+#endif
 #include <stdio.h>
 #include <vector>
 #include <iostream>
@@ -261,6 +264,7 @@ std::string LogImpl::GetTimeStampString
 (
 )
 {
+#ifndef _WIN32
 	// Get a timestamp
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -274,6 +278,19 @@ std::string LogImpl::GetTimeStampString
 			tm->tm_hour, tm->tm_min, tm->tm_sec, (int)tv.tv_usec / 1000 );
 	std::string str = buf;
 	return str;
+#endif
+#ifdef _WIN32
+
+        // Get a timestamp
+        SYSTEMTIME time;
+        ::GetLocalTime( &time );
+
+        // create a time stamp string for the log message
+        char buf[100];
+        sprintf_s( buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d.%03d ", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds );
+        std::string str = buf;
+        return str;
+#endif
 }
 
 

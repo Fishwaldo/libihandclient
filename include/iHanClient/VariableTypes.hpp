@@ -25,7 +25,8 @@
  */
 
 
-#include <iHanClient/varcontainer.hpp>
+#include "iHanClientDefs.hpp"
+#include "varcontainer.hpp"
 
 #ifndef VARIABLETYPES_HPP_
 #define VARIABLETYPES_HPP_
@@ -39,7 +40,7 @@ namespace iHanClient {
 
 
 
-class VarTypeHelper {
+class IHANCLIENT_EXPORT VarTypeHelper {
 	public:
 		static VarTypeHelper *Get();
 		static VarTypeHelper *Create(HashVals vars);
@@ -230,7 +231,9 @@ class VarTypeHelper {
 		virtual ~VarTypeHelper();
 		VarTypeHelper(VarTypeHelper const&);
 		VarTypeHelper & operator=(VarTypeHelper const&);
+		IHANCLIENT_EXPORT_WARNINGS_OFF
 		std::map<uint32_t, std::string> mapping;
+		IHANCLIENT_EXPORT_WARNINGS_ON
 		static VarTypeHelper *instance;
 		uint32_t customid;
 };
