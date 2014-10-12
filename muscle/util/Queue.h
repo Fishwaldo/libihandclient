@@ -16,7 +16,7 @@ namespace muscle {
  *  an O(1) operation.  A Queue can also serve as a reasonably efficient resizable-array 
  *  class (aka Vector) if that is all you need.
  */
-template <class ItemType> class Queue
+template <class ItemType> class MUSCLE_EXPORT Queue
 {
 public:
    /** Default constructor.  */
@@ -572,6 +572,7 @@ public:
    const ItemType * GetRawArrayPointer() const {return _queue;}
 
 private:
+   MUSCLE_EXPORT_WARNINGS_OFF
    status_t EnsureSizeAux(uint32 numSlots, ItemType ** optRetOldArray) {return EnsureSizeAux(numSlots, false, 0, optRetOldArray);}
    status_t EnsureSizeAux(uint32 numSlots, bool setNumItems, uint32 extraReallocItems, ItemType ** optRetOldArray);
    const ItemType * GetArrayPointerAux(uint32 whichArray, uint32 & retLength) const;
@@ -594,6 +595,7 @@ private:
    uint32 _itemCount;  // number of valid items in the array
    uint32 _headIndex;  // index of the first filled slot (meaningless if _itemCount is zero)
    uint32 _tailIndex;  // index of the last filled slot (meaningless if _itemCount is zero)
+   MUSCLE_EXPORT_WARNINGS_ON
 };
 
 template <class ItemType>

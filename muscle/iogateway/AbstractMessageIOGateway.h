@@ -15,7 +15,7 @@ namespace muscle {
 class AbstractMessageIOGateway;
 
 /** Interface for any object that wishes to be notified by AbstractMessageIOGateway::DoInput() about received Messages. */
-class AbstractGatewayMessageReceiver 
+class MUSCLE_EXPORT AbstractGatewayMessageReceiver 
 {
 public:
    /** Default constructor */
@@ -89,7 +89,7 @@ private:
  *  Messages to the tail of the Queue, which your code can then pick up later on at its leisure.
  *  (For high-bandwidth stuff, this isn't as memory efficient, but for simple programs it's good enough)
  */
-class QueueGatewayMessageReceiver : public AbstractGatewayMessageReceiver, public Queue<MessageRef>
+class MUSCLE_EXPORT QueueGatewayMessageReceiver : public AbstractGatewayMessageReceiver, public Queue<MessageRef>
 {
 public:
    /** Default constructor */
@@ -103,7 +103,7 @@ protected:
  *  Abstract base class representing an object that can send/receive 
  *  Messages via a DataIO byte-stream.
  */
-class AbstractMessageIOGateway : public RefCountable, public AbstractGatewayMessageReceiver, public PulseNode, private CountedObject<AbstractMessageIOGateway>
+class MUSCLE_EXPORT AbstractMessageIOGateway : public RefCountable, public AbstractGatewayMessageReceiver, public PulseNode, private CountedObject<AbstractMessageIOGateway>
 {
 public:
    /** Default Constructor. */

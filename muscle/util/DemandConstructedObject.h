@@ -16,7 +16,7 @@ namespace muscle {
  *  while at the same time avoiding the overhead and uncertainty of a separate dynamic memory 
  *  allocation for the object.
  */
-template <typename T> class DemandConstructedObject
+template <typename T> class MUSCLE_EXPORT DemandConstructedObject
 {
 public:
    /** Constructor.  */

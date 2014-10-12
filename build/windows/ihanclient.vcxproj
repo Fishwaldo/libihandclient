@@ -42,10 +42,7 @@
     <IncludePath>E:\Dev\boost_1_56_0\;$(IncludePath)</IncludePath>
     <LibraryPath>E:\Dev\boost_1_56_0\lib32-msvc-10.0;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>E:\Dev\boost_1_56_0\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Dev\boost_1_56_0\lib32-msvc-10.0;$(LibraryPath)</LibraryPath>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -103,6 +100,9 @@
     <ClInclude Include="..\..\include\iHanClient\VariableTypes.hpp" />
     <ClInclude Include="..\..\include\iHanClient\ZBHAProfiles.hpp" />
     <ClInclude Include="..\..\include\iHanClient\ZBLocations.hpp" />
+    <ClInclude Include="..\..\muscle\dataio\DataIO.h" />
+    <ClInclude Include="..\..\muscle\iogateway\AbstractMessageIOGateway.h" />
+    <ClInclude Include="..\..\muscle\iogateway\MessageIOGateway.h" />
     <ClInclude Include="..\..\muscle\message\Message.h" />
     <ClInclude Include="..\..\muscle\support\Flattenable.h" />
     <ClInclude Include="..\..\muscle\support\MuscleSupport.h" />
@@ -110,9 +110,14 @@
     <ClInclude Include="..\..\muscle\system\AtomicCounter.h" />
     <ClInclude Include="..\..\muscle\util\Cloneable.h" />
     <ClInclude Include="..\..\muscle\util\CountedObject.h" />
+    <ClInclude Include="..\..\muscle\util\DemandConstructedObject.h" />
     <ClInclude Include="..\..\muscle\util\FlatCountable.h" />
     <ClInclude Include="..\..\muscle\util\Hashtable.h" />
     <ClInclude Include="..\..\muscle\util\MString.h" />
+    <ClInclude Include="..\..\muscle\util\NestCount.h" />
+    <ClInclude Include="..\..\muscle\util\PointerAndBool.h" />
+    <ClInclude Include="..\..\muscle\util\PulseNode.h" />
+    <ClInclude Include="..\..\muscle\util\Queue.h" />
     <ClInclude Include="..\..\muscle\util\RefCount.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

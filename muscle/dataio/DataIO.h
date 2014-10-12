@@ -10,7 +10,7 @@
 namespace muscle {
  
 /** Abstract base class for a byte-stream Data I/O interface, similar to Be's BDataIO.  */
-class DataIO : public RefCountable, private CountedObject<DataIO>
+class MUSCLE_EXPORT DataIO : public RefCountable, private CountedObject<DataIO>
 {
 public:
    /** Values to pass in to DataIO::Seek()'s second parameter */

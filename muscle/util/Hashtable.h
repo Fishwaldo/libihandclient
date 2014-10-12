@@ -80,7 +80,7 @@ enum {
  * will be automatically notified so that they do the right thing and won't continue to
  * reference at any now-invalid items.
  */
-template <class KeyType, class ValueType, class HashFunctorType = typename AutoChooseHashFunctorHelper<KeyType>::Type > class HashtableIterator
+template <class KeyType, class ValueType, class HashFunctorType = typename AutoChooseHashFunctorHelper<KeyType>::Type > class MUSCLE_EXPORT HashtableIterator
 {
 public:
    /**

@@ -14,7 +14,7 @@ namespace muscle {
   * required to be aligned to even addresses, you can define MUSCLE_AVOID_BITSTUFFING to force the 
   * boolean to declared as a separate member variable (at the cost of increased memory usage, of course).
   */
-template <class T> class PointerAndBool
+template <class T> class MUSCLE_EXPORT PointerAndBool
 {
 public:
    /** Default constructor. */

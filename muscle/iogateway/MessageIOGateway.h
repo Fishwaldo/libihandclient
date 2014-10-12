@@ -49,7 +49,7 @@ typedef void (*MessageFlattenedCallback)(const MessageRef & msgRef, void * userD
  * An example flattened Message byte structure is provided at the bottom of the
  * MessageIOGateway.h header file.
  */
-class MessageIOGateway : public AbstractMessageIOGateway, private CountedObject<MessageIOGateway>
+class MUSCLE_EXPORT MessageIOGateway : public AbstractMessageIOGateway, private CountedObject<MessageIOGateway>
 {
 public:
    /** 
@@ -243,7 +243,7 @@ private:
    ZLibCodec * GetCodec(int32 newEncoding, ZLibCodec * & setCodec) const;
 #endif
 
-   class TransferBuffer
+   class MUSCLE_EXPORT TransferBuffer
    {
    public:
       TransferBuffer() : _offset(0) {/* empty */}
@@ -294,7 +294,7 @@ private:
   * Message sizes are calculated via FlattenedSize(); zlib compression is not
   * taken into account.
   */
-class CountedMessageIOGateway : public MessageIOGateway
+class MUSCLE_EXPORT CountedMessageIOGateway : public MessageIOGateway
 {
 public:
    /** 

@@ -15,7 +15,7 @@ class PulseNodeManager;
  *  its PulseNodeManager.   (Typically the PulseNodeManager role is played by
  *  the ReflectServer class)
  */
-class PulseNode : private CountedObject<PulseNode>
+class MUSCLE_EXPORT PulseNode : private CountedObject<PulseNode>
 {
 public:
    /** Default constructor */

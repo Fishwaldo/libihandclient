@@ -76,7 +76,7 @@ DECLARE_REFTYPES(RefCountable);
  *  that this ConstRef item holds is considered read-only; if you want
  *  it to be modfiable, you should use the Ref class instead.
  */
-template <class Item> class ConstRef
+template <class Item> class MUSCLE_EXPORT ConstRef
 {
 public:
    typedef ObjectPool<Item> ItemPool;        /**< type of an ObjectPool of user data structures */
@@ -360,7 +360,7 @@ private:
 };
 
 /** When we compare references, we really want to be comparing what those references point to */
-template <typename ItemType> class CompareFunctor<ConstRef<ItemType> >
+template <typename ItemType> class MUSCLE_EXPORT CompareFunctor<ConstRef<ItemType> >
 {
 public:
    /** Compares the two ConstRef's strcmp() style, returning zero if they are equal, a negative value if (item1) comes first, or a positive value if (item2) comes first. */
@@ -373,7 +373,7 @@ public:
  *  that this ConstRef item holds is considered modifiable; if you want
  *  it to be read-only, you should use the ConstRef class instead.
  */
-template <class Item> class Ref : public ConstRef<Item>
+template <class Item> class MUSCLE_EXPORT Ref : public ConstRef<Item>
 {
 public:
    /** 
