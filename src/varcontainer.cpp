@@ -14,6 +14,7 @@ typedef enum VSErrorType_t {
 	EMPTY_RESULT,
 	NULL_RESULT,
 	OUT_OF_RANGE,
+	WRONG_TYPE,
 	UNKNOWN_ERROR
 } VSErrorType_t;
 
@@ -455,7 +456,7 @@ StoredVals_t VarStorage_t::getValueP(std::string FieldName, StoredType_t type, u
 		StoredVals_t SV = storedval->at(pos);
 		if (SV->StoredType != type) {
 			iHanClient::Logging::LogError(std::string("Field " + FieldName + " is not of type " + getType(type) + " (" + lexical_cast<std::string>(type) + ") but type " + getType(SV) + " (" + lexical_cast<std::string>(SV->StoredType) + ")"));
-			return StoredVals_t(new StoredVals_r);
+			BOOST_THROW_EXCEPTION(VS_Exception(WRONG_TYPE));
 		}
 		return SV;
 	}

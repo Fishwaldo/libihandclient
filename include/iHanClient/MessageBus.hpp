@@ -125,7 +125,7 @@ public:
 		 * value being updated. The Report Var Message can be triggered via either a SetVar Message, a actual change on the Device
 		 * or directly on the client's variables.
 		 *
-		 * The structure of the ReportVar VarStorage_tis basically a list of Variables and their new values.
+		 * The structure of the ReportVar VarStorage_t is basically a list of Variables and their new values.
 		 *
 		 * Generally, you should not need to generate a ReportVar Message, as this should be taken care of by the iHanD software
 		 * instead.
@@ -145,7 +145,7 @@ public:
 		 * value being updated. The Report Config Message can be triggered via either a SetConfig Message, a actual change on the Device
 		 * or directly on the client's Configuration.
 		 *
-		 * The structure of the ReportConfig VarStorage_tis basically a list of Variables and their new values.
+		 * The structure of the ReportConfig VarStorage_t is basically a list of Variables and their new values.
 		 *
 		 * Generally, you should not need to generate a ReportConfig Message, as this should be taken care of by the iHanD software
 		 * instead.
@@ -178,6 +178,51 @@ public:
 		 * @return success/failure of creating the newDevice Message
 		 */
 		bool createNewDevice(VarStorage newclient, std::string source);
+		/*! @brief Create a message about a new Config Variable that has been added to a Client.
+		 *
+		 * This Method is used to communicate about new Config Variables that have been added to a Client.
+		 *
+		 * The createNewConfig method should be called when new Config values are added to a Client:
+		 * @code{.cpp}
+		 *  MessageBusFactory(newConfig);
+		 *  VarStorage config = c->getConfigDescriptors()
+		 *  VarStorage configvaluedescriptor;
+		 *  config->getValueAsVarStorage("name", configvaluedescriptor);
+		 *  newClient->createNewConfig(configvaluedescriptor, boost::uuids::to_string(this->getDeviceID()));
+		 * @endcode
+		 *
+		 * @sa Ctlr::Clients::createClientInformPacket
+		 * @sa getNewDevice
+		 * @sa MessageFlow
+		 *
+		 * @param newconfigdescriptor A HashVal variable thats extracted from the Config Descriptor
+		 * @param source the Source DeviceID of the device Generating this message.
+		 * @return success/failure of creating the createNewConfig Message
+		 */
+		bool createNewConfig(HashVals newconfigdescriptor, std::string source);
+		/*! @brief Create a message about a new Var Variable that has been added to a Client.
+		 *
+		 * This Method is used to communicate about new Var Variables that have been added to a Client.
+		 *
+		 * The createNewVar method should be called when new Var values are added to a Client:
+		 * @code{.cpp}
+		 *  MessageBusFactory(newVar);
+		 *  VarStorage vars = c->getConfigDescriptors()
+		 *  VarStorage varvaluedescriptor;
+		 *  vars->getValueAsVarStorage("name", varvaluedescriptor);
+		 *  newClient->createNewVar(varvaluedescriptor, boost::uuids::to_string(this->getDeviceID()));
+		 * @endcode
+		 *
+		 * @sa Ctlr::Clients::createClientInformPacket
+		 * @sa getNewDevice
+		 * @sa MessageFlow
+		 *
+		 * @param newvardescriptor A VarStorage variable thats extracted from the Config Descriptor
+		 * @param source the Source DeviceID of the device Generating this message.
+		 * @return success/failure of creating the createNewConfig Message
+		 */
+		bool createNewVar(HashVals newvardescriptor, std::string source);
+
 		/*! @brief Create a message about a Client that has been deleted.
 		 *
 		 * This Method is used to communicate about Clients that have been deleted to the iHanD software.
@@ -397,6 +442,34 @@ public:
 		 * @return a VarStorage_t variable containing details about the new device, or a empty VarStorage_t on failure
 		 */
 		VarStorage getNewDevice();
+		/*! @brief get a New Config Variable Message
+		 *
+		 * Gets a New Config Variable Message from the MessageBus_t message. You should first check the MessageType with getType to determine
+		 * what type of message this MessageBus contains.
+		 *
+		 * The New Config Variable Message is contains details about a new Config Variable that has been added to a client.
+		 * the Contents is a Config Descriptors describing the new Config Variable.
+		 *
+		 * @sa setNewDevice
+		 * @sa MessageFlow
+		 *
+		 * @return a VarStorage_t variable containing a VarDescriptor for the new Config Variable, or a empty VarStorage_t on failure
+		 */
+		VarStorage getNewConfig();
+		/*! @brief get a New Var Variable Message
+		 *
+		 * Gets a New Var Variable Message from the MessageBus_t message. You should first check the MessageType with getType to determine
+		 * what type of message this MessageBus contains.
+		 *
+		 * The New Var Variable Message is contains details about a new Config Variable that has been added to a client.
+		 * the Contents is a Config Descriptors describing the new Config Variable.
+		 *
+		 * @sa setNewDevice
+		 * @sa MessageFlow
+		 *
+		 * @return a VarStorage_t variable containing a VarDescriptor for the new Var Variable, or a empty VarStorage_t on failure
+		 */
+		VarStorage getNewVar();
 		/*! @brief get a Setup Message
 		 *
 		 * Gets a setup message from the device. The format/layout of a Setup message is user defined.
