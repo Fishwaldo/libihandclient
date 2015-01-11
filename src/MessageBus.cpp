@@ -454,16 +454,16 @@ VarStorage MessageBus_t::getTransportVarStorage() {
 				vars = this->message;
 				break;
 			case MSB_ADD_CONFIG:
-				vars = this->message;
+				vars->addVarStorageValue(SRVCAP_ENDPT_CONFIG_DESC, this->message);
 				break;
 			case MSB_ADD_VAR:
-				vars = this->message;
+				vars->addVarStorageValue(SRVCAP_ENDPT_VARS_DESC, this->message);
 				break;
 			case MSB_DEL_CONFIG:
-				vars = this->message;
+				vars->addVarStorageValue(SRVCAP_ENDPT_CONFIG_DESC, this->message);
 				break;
 			case MSB_DEL_VAR:
-				vars = this->message;
+				vars->addVarStorageValue(SRVCAP_ENDPT_VARS_DESC, this->message);
 				break;
 			case MSB_UNKNOWN:
 				/* Empty */
@@ -529,20 +529,36 @@ bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
 			this->message->setWhat(MSB_SERVER_CAP);
 			return true;
 		case MSB_ADD_CONFIG:
-			this->message = msg;
-			this->message->setWhat(MSB_ADD_CONFIG);
+			ret = msg->getVarStorageValue(SRVCAP_ENDPT_CONFIG_DESC, this->message);
+			if (!ret) {
+				iHanClient::Logging::LogWarn(std::string("Failed to get EndPt Config Vars from Message"));
+				return false;
+			}
+			this->message->setWhat(msg->getWhat());
 			return true;
 		case MSB_ADD_VAR:
-			this->message = msg;
-			this->message->setWhat(MSB_ADD_VAR);
+			ret = msg->getVarStorageValue(SRVCAP_ENDPT_VARS_DESC, this->message);
+			if (!ret) {
+				iHanClient::Logging::LogWarn(std::string("Failed to get EndPt Vars from Message"));
+				return false;
+			}
+			this->message->setWhat(msg->getWhat());
 			return true;
 		case MSB_DEL_CONFIG:
-			this->message = msg;
-			this->message->setWhat(MSB_DEL_CONFIG);
+			ret = msg->getVarStorageValue(SRVCAP_ENDPT_CONFIG_DESC, this->message);
+			if (!ret) {
+				iHanClient::Logging::LogWarn(std::string("Failed to get EndPt Config Vars from Message"));
+				return false;
+			}
+			this->message->setWhat(msg->getWhat());
 			return true;
 		case MSB_DEL_VAR:
-			this->message = msg;
-			this->message->setWhat(MSB_DEL_VAR);
+			ret = msg->getVarStorageValue(SRVCAP_ENDPT_VARS_DESC, this->message);
+			if (!ret) {
+				iHanClient::Logging::LogWarn(std::string("Failed to get EndPt Vars from Message"));
+				return false;
+			}
+			this->message->setWhat(msg->getWhat());
 			return true;
 		case MSB_UNKNOWN:
 			return false;
