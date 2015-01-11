@@ -469,9 +469,11 @@ VarStorage MessageBus_t::getTransportVarStorage() {
 				/* Empty */
 				break;
 		}
+		std::cout << vars << std::endl;
 		return vars;
 	}
 	iHanClient::Logging::LogWarn(std::string("Invalid Message"));
+
 	return vars;
 }
 
@@ -535,7 +537,7 @@ bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
 				return false;
 			}
 			this->message->setWhat(msg->getWhat());
-			return true;
+			break;
 		case MSB_ADD_VAR:
 			ret = msg->getVarStorageValue(SRVCAP_ENDPT_VARS_DESC, this->message);
 			if (!ret) {
@@ -543,7 +545,7 @@ bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
 				return false;
 			}
 			this->message->setWhat(msg->getWhat());
-			return true;
+			break;
 		case MSB_DEL_CONFIG:
 			ret = msg->getVarStorageValue(SRVCAP_ENDPT_CONFIG_DESC, this->message);
 			if (!ret) {
@@ -551,7 +553,7 @@ bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
 				return false;
 			}
 			this->message->setWhat(msg->getWhat());
-			return true;
+			break;
 		case MSB_DEL_VAR:
 			ret = msg->getVarStorageValue(SRVCAP_ENDPT_VARS_DESC, this->message);
 			if (!ret) {
@@ -559,7 +561,7 @@ bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
 				return false;
 			}
 			this->message->setWhat(msg->getWhat());
-			return true;
+			break;
 		case MSB_UNKNOWN:
 			return false;
 	}
