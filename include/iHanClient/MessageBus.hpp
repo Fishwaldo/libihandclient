@@ -222,6 +222,30 @@ public:
 		 * @return success/failure of creating the createNewConfig Message
 		 */
 		bool createNewVar(HashVals newvardescriptor, std::string source);
+		/*! @brief Create a message about a Config Variable that has been deleted from a Client.
+		 *
+		 * This Method is used to communicate about Config Variables that have been Deleted from a Client.
+		 *
+		 * @sa createNewConfig
+		 * @sa MessageFlow
+		 *
+		 * @param config The Config variable that has been deleted from the Config Descriptor
+		 * @param source the Source DeviceID of the device Generating this message.
+		 * @return success/failure of creating the createDelConfig Message
+		 */
+		bool createDelConfig(std::string config, std::string source);
+		/*! @brief Create a message about a Var Variable that has been deleted from a Client.
+		 *
+		 * This Method is used to communicate about Var Variables that have been Deleted from a Client.
+		 *
+		 * @sa createNewVar
+		 * @sa MessageFlow
+		 *
+		 * @param config The Var variable that has been deleted from the Config Descriptor
+		 * @param source the Source DeviceID of the device Generating this message.
+		 * @return success/failure of creating the createDelVar Message
+		 */
+		bool createDelVar(std::string var, std::string source);
 
 		/*! @brief Create a message about a Client that has been deleted.
 		 *
@@ -470,6 +494,35 @@ public:
 		 * @return a VarStorage_t variable containing a VarDescriptor for the new Var Variable, or a empty VarStorage_t on failure
 		 */
 		VarStorage getNewVar();
+		/*! @brief get a Del Config Variable Message
+		 *
+		 * Gets a Del Config Variable Message from the MessageBus_t message. You should first check the MessageType with getType to determine
+		 * what type of message this MessageBus contains.
+		 *
+		 * The Del Config Variable Message is contains details about a Config Variable that has been deleted from a client.
+		 * the Contents is a VarStorage containing the Variable Deleted in a String variable called DelConfig.
+		 *
+		 * @sa createDelConfig
+		 * @sa MessageFlow
+		 *
+		 * @return a VarStorage_t variable containing a VarContainer for the Deleted Config Variable, or a empty VarStorage_t on failure
+		 */
+		VarStorage getDelConfig();
+		/*! @brief get a Del Var Variable Message
+		 *
+		 * Gets a Del Var Variable Message from the MessageBus_t message. You should first check the MessageType with getType to determine
+		 * what type of message this MessageBus contains.
+		 *
+		 * The Del Var Variable Message is contains details about a Var Variable that has been deleted from a client.
+		 * the Contents is a VarStorage containing the Variable Deleted in a String variable called DelVar.
+		 *
+		 * @sa createDelConfig
+		 * @sa MessageFlow
+		 *
+		 * @return a VarStorage_t variable containing a VarContainer for the Deleted Var Variable, or a empty VarStorage_t on failure
+		 */
+		VarStorage getDelVar();
+
 		/*! @brief get a Setup Message
 		 *
 		 * Gets a setup message from the device. The format/layout of a Setup message is user defined.

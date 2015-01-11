@@ -128,6 +128,33 @@ bool MessageBus_t::createNewVar(HashVals newvardescriptor, std::string source) {
 	return false;
 }
 
+bool MessageBus_t::createDelConfig(std::string config, std::string source) {
+	VarContainerFactory(delConfig);
+	delConfig->addStringValue("DelConfig", config);
+	if (delConfig) {
+		this->message = delConfig;
+		this->message->setWhat(MSB_DEL_CONFIG);
+		this->source = source;
+		return true;
+	}
+	iHanClient::Logging::LogWarn(std::string("Invalid Var Passed"));
+	return false;
+}
+
+bool MessageBus_t::createDelVar(std::string config, std::string source) {
+	VarContainerFactory(delVar);
+	delVar->addStringValue("delVar", config);
+	if (delVar) {
+		this->message = delVar;
+		this->message->setWhat(MSB_DEL_VAR);
+		this->source = source;
+		return true;
+	}
+	iHanClient::Logging::LogWarn(std::string("Invalid Var Passed"));
+	return false;
+
+}
+
 bool MessageBus_t::createDelDevice(std::string DeviceID, std::string source) {
 	if (DeviceID.length() > 0) {
 		VarContainerFactory(delDevice);
@@ -208,6 +235,10 @@ std::string MessageBus_t::getTypeAsString() {
 				return "AddConfigDescriptor";
 			case MSB_ADD_VAR:
 				return "AddVarDescriptor";
+			case MSB_DEL_CONFIG:
+				return "DelConfigVar";
+			case MSB_DEL_VAR:
+				return "DelVarVar";
 			case MSB_UNKNOWN:
 				return "Unknown";
 		}
@@ -320,6 +351,27 @@ VarStorage MessageBus_t::getNewVar() {
 	return VarStorage(new VarStorage_t());
 }
 
+VarStorage MessageBus_t::getDelConfig() {
+	if (this->message) {
+		if (this->message->getWhat() == MSB_DEL_CONFIG)
+			return this->message;
+		iHanClient::Logging::LogWarn(std::string("Not a Del Config Message:" + this->getTypeAsString()));
+		return VarStorage(new VarStorage_t());
+	}
+	iHanClient::Logging::LogWarn(std::string("Invalid Message"));
+	return VarStorage(new VarStorage_t());
+}
+VarStorage MessageBus_t::getDelVar() {
+	if (this->message) {
+		if (this->message->getWhat() == MSB_DEL_VAR)
+			return this->message;
+		iHanClient::Logging::LogWarn(std::string("Not a Del Var Message:" + this->getTypeAsString()));
+		return VarStorage(new VarStorage_t());
+	}
+	iHanClient::Logging::LogWarn(std::string("Invalid Message"));
+	return VarStorage(new VarStorage_t());
+}
+
 std::string MessageBus_t::getDelDevice() {
 	std::string DeviceID;
 	if (this->message) {
@@ -407,6 +459,12 @@ VarStorage MessageBus_t::getTransportVarStorage() {
 			case MSB_ADD_VAR:
 				vars = this->message;
 				break;
+			case MSB_DEL_CONFIG:
+				vars = this->message;
+				break;
+			case MSB_DEL_VAR:
+				vars = this->message;
+				break;
 			case MSB_UNKNOWN:
 				/* Empty */
 				break;
@@ -477,6 +535,14 @@ bool MessageBus_t::importTransportVarStorage(VarStorage msg) {
 		case MSB_ADD_VAR:
 			this->message = msg;
 			this->message->setWhat(MSB_ADD_VAR);
+			return true;
+		case MSB_DEL_CONFIG:
+			this->message = msg;
+			this->message->setWhat(MSB_DEL_CONFIG);
+			return true;
+		case MSB_DEL_VAR:
+			this->message = msg;
+			this->message->setWhat(MSB_DEL_VAR);
 			return true;
 		case MSB_UNKNOWN:
 			return false;
@@ -572,6 +638,8 @@ bool MsgIsReport(MSG_BUS_TYPES type) {
 		case MSB_SERVER_CAP:
 		case MSB_ADD_CONFIG:
 		case MSB_ADD_VAR:
+		case MSB_DEL_CONFIG:
+		case MSB_DEL_VAR:
 		case MSB_UNKNOWN:
 			return false;
 	}
@@ -592,6 +660,8 @@ bool MsgIsSet(MSG_BUS_TYPES type) {
 		case MSB_SERVER_CAP:
 		case MSB_ADD_CONFIG:
 		case MSB_ADD_VAR:
+		case MSB_DEL_CONFIG:
+		case MSB_DEL_VAR:
 		case MSB_UNKNOWN:
 			return false;
 	}
