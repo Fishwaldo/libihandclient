@@ -166,6 +166,7 @@ typedef enum t_ConfigType {
 	TC_VARSTORAGE = ST_VARSTORAGE,
 	TC_LIST = ST_LIST,
 	TC_IPADDR,
+	TC_CALLBACK,
 	TC_NULL = ST_INVALID
 } t_ConfigType;
 
