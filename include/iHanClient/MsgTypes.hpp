@@ -238,4 +238,10 @@ enum ClientCapabilities {
 	CLNTCAP_FLAG_TERMS = 0x03		/* Combination of VARTYPES and Terms, hence 3 not 2 */
 };
 
+enum CallBack_Status {
+	CB_STATUS_OK,
+	CB_STATUS_INPROGRESS,
+	CB_STATUS_FAILED
+};
+
 #endif
